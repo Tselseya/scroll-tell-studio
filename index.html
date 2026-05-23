@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Scroll·Tell Creator Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#0C0B09;color:#EDE9E2;font-family:'JetBrains Mono',monospace;overflow:hidden}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#2A2720;border-radius:2px}
+button{cursor:pointer;font-family:'JetBrains Mono',monospace}
+button:disabled{cursor:not-allowed}
+textarea,input{font-family:'JetBrains Mono',monospace}
+textarea::placeholder,input::placeholder{color:#2E2B26}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.card{background:#141210;border:0.5px solid #252218;border-radius:9px;overflow:hidden;animation:fadeIn 0.3s ease}
+</style>
+</head>
+<body>
+<div id="app" style="display:flex;height:100vh">
+
+  <!-- SIDEBAR -->
+  <div style="width:200px;background:#0F0E0C;border-right:0.5px solid #1E1C18;display:flex;flex-direction:column;flex-shrink:0">
+    <div style="padding:18px 16px 14px;border-bottom:0.5px solid #1E1C18">
+      <div style="font-size:10px;font-weight:500;color:#C8860A;letter-spacing:0.16em">SCROLL·TELL</div>
+      <div style="font-size:9px;color:#3A3730;margin-top:3px;letter-spacing:0.06em">Creator Studio</div>
+    </div>
+    <nav style="flex:1;padding:10px 0" id="nav"></nav>
+    <div style="border-top:0.5px solid #1E1C18;padding:6px 0" id="bottomnav"></div>
+  </div>
+
+  <!-- MAIN -->
+  <div style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+
+    <!-- SETTINGS PANEL -->
+    <div id="settings-panel" style="display:none;background:#141210;border-bottom:0.5px solid #1E1C18;padding:14px 18px">
+      <div style="font-size:9px;color:#444;letter-spacing:0.12em;margin-bottom:6px">HUGGINGFACE VIDEO SPACE URL</div>
+      <input id="hf-url" type="text" value="https://leemaoo-wan-ai-wan2-point-1-text-to-video.hf.space"
+        style="width:100%;background:#0C0B09;border:0.5px solid #2A2720;border-radius:5px;color:#EDE9E2;padding:7px 10px;font-size:10px;outline:none"/>
+      <div style="font-size:9px;color:#333;margin-top:5px">Paste the URL from your browser when you open a Wan2.1 space on huggingface.co/spaces</div>
+      <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+        <div style="font-size:9px;color:#3A3730">Backup spaces (paste if main is slow):</div>
+        <code style="font-size:9px;color:#444">gourav8070-wan-ai-wan2-point-1-text-to-video.hf.space</code>
+      </div>
+    </div>
+
+    <!-- TAB BAR -->
+    <div style="background:#0F0E0C;border-bottom:0.5px solid #1E1C18;display:flex;gap:0" id="tabs"></div>
+
+    <!-- GALLERY VIEW -->
+    <div id="view-media" style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+      <div style="flex:1;overflow-y:auto;padding:16px" id="gallery-scroll">
+        <div id="generating-bar" style="display:none;background:#141210;border:0.5px solid #252218;border-radius:8px;padding:13px 16px;margin-bottom:12px;align-items:center;gap:12px">
+          <div style="width:11px;height:11px;border:1.5px solid #C8860A;border-top-color:transparent;border-radius:50%;flex-shrink:0;animation:spin 0.7s linear infinite"></div>
+          <div>
+            <div id="status-text" style="font-size:11px;color:#EDE9E2"></div>
+            <div id="status-sub" style="font-size:9px;color:#3A3730;margin-top:2px"></div>
+          </div>
+        </div>
+        <div id="empty-state" style="height:300px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#252218;gap:10px">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+          <div style="font-size:11px;letter-spacing:0.08em">Your creations appear here</div>
+        </div>
+        <div id="results-grid" style="display:none;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px"></div>
+      </div>
+
+      <!-- BOTTOM COMPOSE -->
+      <div style="background:#0F0E0C;border-top:0.5px solid #1E1C18;padding:13px 16px">
+        <div style="display:flex;gap:5px;margin-bottom:10px;align-items:center;flex-wrap:wrap" id="preset-row"></div>
+        <div style="background:#161410;border:0.5px solid #252218;border-radius:9px;padding:11px 13px">
+          <textarea id="prompt-input" rows="2" placeholder="Describe the scene you want to create..."
+            style="width:100%;background:transparent;border:none;color:#EDE9E2;font-size:12px;resize:none;outline:none;line-height:1.65"></textarea>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:7px">
+            <div id="mode-toggle" style="display:flex;background:#0C0B09;border:0.5px solid #252218;border-radius:5px;overflow:hidden"></div>
+            <button onclick="goEnhance()" style="background:transparent;border:0.5px solid #252218;color:#444;padding:5px 10px;border-radius:5px;font-size:9px;letter-spacing:0.06em">✦ ENHANCE</button>
+            <div style="flex:1"></div>
+            <span style="font-size:9px;color:#252218">⌘↵</span>
+            <button id="create-btn" onclick="doCreate()" style="background:#C8860A;color:#0C0B09;border:none;padding:6px 16px;border-radius:5px;font-size:10px;font-weight:500;letter-spacing:0.1em">CREATE →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ENHANCE VIEW -->
+    <div id="view-enhance" style="flex:1;display:none;flex-direction:column;overflow:hidden">
+      <div style="flex:1;overflow-y:auto;padding:18px">
+        <div style="font-size:9px;color:#3A3730;letter-spacing:0.12em;margin-bottom:12px">PROMPT ENHANCER — Type a rough idea, get a cinematic 2D animated scene prompt</div>
+        <div style="background:#141210;border:0.5px solid #252218;border-radius:9px;padding:13px">
+          <textarea id="enhance-input" rows="3" placeholder="e.g. girl walking alone at night in city..."
+            style="width:100%;background:transparent;border:none;color:#EDE9E2;font-size:12px;resize:none;outline:none;line-height:1.65"></textarea>
+          <div style="display:flex;gap:8px;margin-top:9px;align-items:center;flex-wrap:wrap">
+            <div style="display:flex;background:#0C0B09;border:0.5px solid #252218;border-radius:5px;overflow:hidden" id="enhance-style-toggle"></div>
+            <div style="flex:1"></div>
+            <button id="enhance-btn" onclick="runEnhance()" style="background:#C8860A;color:#0C0B09;border:none;padding:6px 16px;border-radius:5px;font-size:10px;font-weight:500;letter-spacing:0.1em">ENHANCE →</button>
+          </div>
+        </div>
+
+        <div id="enhance-loading" style="display:none;margin-top:14px;background:#141210;border:0.5px solid #252218;border-radius:8px;padding:13px 16px;align-items:center;gap:12px">
+          <div style="width:11px;height:11px;border:1.5px solid #C8860A;border-top-color:transparent;border-radius:50%;flex-shrink:0;animation:spin 0.7s linear infinite"></div>
+          <div style="font-size:11px;color:#EDE9E2">Expanding your prompt with Claude...</div>
+        </div>
+
+        <div id="enhance-results" style="margin-top:14px"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const POLL_BASE="https://image.pollinations.ai/prompt";
+const STYLE_PRESETS=[
+  {id:"flat2d",label:"Flat 2D",suffix:", 2d flat vector animation, bold clean outlines, vivid solid colors, no shading, no gradients, animated series aesthetic, crisp linework"},
+  {id:"illus",label:"Illustrated",suffix:", digital storybook illustration, painterly style, expressive character art, richly detailed background, editorial illustration"},
+  {id:"mixed",label:"Mixed",suffix:", mixed media 2d animation, flat foreground characters with illustrated background, motion graphic elements, bold color blocking"},
+  {id:"cinema",label:"Cinematic",suffix:", cinematic 2d animated scene, dramatic lighting, wide shot, richly colored, animated feature film quality, Studio Ghibli inspired"},
+];
+const RATIOS=[{id:"9:16",w:576,h:1024},{id:"16:9",w:1024,h:576},{id:"1:1",w:768,h:768}];
+const NAV=[
+  {id:"media",icon:"M3 3h7v7H3zm11 0h7v7h-7zM3 14h7v7H3zm11 0h7v7h-7z",label:"All Media"},
+  {id:"enhance",icon:"M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z",label:"Prompt Enhancer"},
+];
+let state={mode:"image",preset:"flat2d",ratio:"9:16",generating:false,results:[],activeNav:"media",showSettings:false,enhancePreset:"flat2d"};
+let esRef=null;
+
+function getHfUrl(){return document.getElementById("hf-url").value.trim().replace(/\/$/,"");}
+function getFullPrompt(base){
+  const s=STYLE_PRESETS.find(x=>x.id===state.preset);
+  return base+(s?s.suffix:"");
+}
+
+function setStatus(msg,sub=""){
+  const bar=document.getElementById("generating-bar");
+  bar.style.display=state.generating?"flex":"none";
+  if(msg){document.getElementById("status-text").textContent=msg;document.getElementById("status-sub").textContent=sub;}
+}
+
+function renderNav(){
+  document.getElementById("nav").innerHTML=NAV.map(n=>`
+    <div onclick="setNav('${n.id}')" style="padding:9px 16px;display:flex;align-items:center;gap:9px;cursor:pointer;font-size:11px;color:${state.activeNav===n.id?"#C8860A":"#444"};background:${state.activeNav===n.id?"rgba(200,134,10,0.07)":"transparent"};border-left:1.5px solid ${state.activeNav===n.id?"#C8860A":"transparent"};letter-spacing:0.04em">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="${n.icon}"/></svg>${n.label}
+    </div>`).join("");
+  document.getElementById("bottomnav").innerHTML=`
+    <div onclick="clearAll()" style="padding:9px 16px;display:flex;align-items:center;gap:9px;cursor:pointer;font-size:11px;color:#333;letter-spacing:0.04em">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>Clear All
+    </div>
+    <div onclick="toggleSettings()" style="padding:9px 16px;display:flex;align-items:center;gap:9px;cursor:pointer;font-size:11px;color:${state.showSettings?"#C8860A":"#444"};letter-spacing:0.04em">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>Settings
+    </div>`;
+}
+
+function renderTabs(){
+  document.getElementById("tabs").innerHTML=`
+    <button onclick="setNav('media')" style="padding:10px 18px;background:transparent;border:none;border-bottom:1.5px solid ${state.activeNav==="media"?"#C8860A":"transparent"};color:${state.activeNav==="media"?"#C8860A":"#444"};font-size:9px;letter-spacing:0.1em">ALL MEDIA</button>
+    <button onclick="setNav('enhance')" style="padding:10px 18px;background:transparent;border:none;border-bottom:1.5px solid ${state.activeNav==="enhance"?"#C8860A":"transparent"};color:${state.activeNav==="enhance"?"#C8860A":"#444"};font-size:9px;letter-spacing:0.1em">✦ PROMPT ENHANCER</button>`;
+}
+
+function renderPresets(){
+  document.getElementById("preset-row").innerHTML=STYLE_PRESETS.map(p=>`
+    <button onclick="setPreset('${p.id}')" style="background:${state.preset===p.id?"rgba(200,134,10,0.12)":"transparent"};border:0.5px solid ${state.preset===p.id?"#C8860A":"#252218"};color:${state.preset===p.id?"#C8860A":"#444"};padding:3px 9px;border-radius:20px;font-size:9px;letter-spacing:0.04em">${p.label}</button>`).join("")+
+    `<div style="flex:1"></div>`+
+    RATIOS.map(r=>`<button onclick="setRatio('${r.id}')" style="background:${state.ratio===r.id?"rgba(200,134,10,0.12)":"transparent"};border:0.5px solid ${state.ratio===r.id?"#C8860A":"#252218"};color:${state.ratio===r.id?"#C8860A":"#444"};padding:3px 8px;border-radius:4px;font-size:9px">${r.id}</button>`).join("");
+}
+
+function renderModeToggle(){
+  document.getElementById("mode-toggle").innerHTML=["image","video"].map(m=>`
+    <button onclick="setMode('${m}')" style="padding:5px 11px;background:${state.mode===m?"#C8860A":"transparent"};color:${state.mode===m?"#0C0B09":"#444"};border:none;font-size:9px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase">${m==="image"?"IMG":"VID"}</button>`).join("");
+}
+
+function renderEnhanceStyles(){
+  const el=document.getElementById("enhance-style-toggle");
+  if(el) el.innerHTML=STYLE_PRESETS.map(p=>`
+    <button onclick="state.enhancePreset='${p.id}';renderEnhanceStyles()" style="padding:5px 10px;background:${state.enhancePreset===p.id?"rgba(200,134,10,0.15)":"transparent"};color:${state.enhancePreset===p.id?"#C8860A":"#444"};border:none;font-size:9px;letter-spacing:0.06em">${p.label}</button>`).join("");
+}
+
+function renderCreateBtn(){
+  const btn=document.getElementById("create-btn");
+  const hasPrompt=document.getElementById("prompt-input").value.trim().length>0;
+  const disabled=state.generating||!hasPrompt;
+  btn.disabled=disabled;
+  btn.style.background=disabled?"#1E1A14":"#C8860A";
+  btn.style.color=disabled?"#333":"#0C0B09";
+  btn.textContent=state.generating?"GENERATING...":"CREATE →";
+}
+
+function renderResults(){
+  const grid=document.getElementById("results-grid");
+  const empty=document.getElementById("empty-state");
+  if(state.results.length===0&&!state.generating){empty.style.display="flex";grid.style.display="none";}
+  else{empty.style.display="none";grid.style.display="grid";}
+  grid.innerHTML=state.results.map(r=>`
+    <div class="card">
+      ${r.type==="image"
+        ?`<img src="${r.url}" alt="generated" style="width:100%;display:block" loading="lazy" onerror="this.style.display='none'">`
+        :`<video src="${r.url}" controls playsinline style="width:100%;display:block"></video>`}
+      <div style="padding:9px 11px">
+        <div style="font-size:9px;color:#3A3730;margin-bottom:7px;line-height:1.6;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">${r.prompt}</div>
+        <div style="display:flex;gap:6px">
+          <a href="${r.url}" download target="_blank" style="flex:1;background:transparent;border:0.5px solid #252218;color:#444;padding:5px 0;border-radius:4px;font-size:9px;letter-spacing:0.06em;text-decoration:none;text-align:center">SAVE</a>
+          <button onclick="remixResult('${r.id}')" style="flex:1;background:transparent;border:0.5px solid #252218;color:#444;padding:5px 0;border-radius:4px;font-size:9px;letter-spacing:0.06em">REMIX</button>
+          <button onclick="sendToEnhance('${r.id}')" style="flex:1;background:transparent;border:0.5px solid #252218;color:#444;padding:5px 0;border-radius:4px;font-size:9px;letter-spacing:0.06em">ENHANCE</button>
+        </div>
+      </div>
+    </div>`).join("");
+}
+
+function render(){renderNav();renderTabs();renderPresets();renderModeToggle();renderCreateBtn();renderResults();renderEnhanceStyles();}
+
+function setNav(id){
+  state.activeNav=id;
+  document.getElementById("view-media").style.display=id==="media"?"flex":"none";
+  document.getElementById("view-enhance").style.display=id==="enhance"?"flex":"none";
+  renderNav();renderTabs();
+}
+function setPreset(id){state.preset=id;renderPresets();}
+function setRatio(id){state.ratio=id;renderPresets();}
+function setMode(m){state.mode=m;renderModeToggle();}
+function clearAll(){if(confirm("Clear all generated media?"))state.results=[];renderResults();}
+function toggleSettings(){
+  state.showSettings=!state.showSettings;
+  document.getElementById("settings-panel").style.display=state.showSettings?"block":"none";
+  renderNav();
+}
+function remixResult(id){
+  const r=state.results.find(x=>String(x.id)===String(id));
+  if(r){document.getElementById("prompt-input").value=r.rawPrompt||r.prompt;state.mode=r.type;setNav("media");renderModeToggle();}
+}
+function sendToEnhance(id){
+  const r=state.results.find(x=>String(x.id)===String(id));
+  if(r){document.getElementById("enhance-input").value=r.rawPrompt||r.prompt;setNav("enhance");}
+}
+function goEnhance(){
+  const p=document.getElementById("prompt-input").value.trim();
+  if(p)document.getElementById("enhance-input").value=p;
+  setNav("enhance");
+}
+
+function genImage(){
+  const promptText=document.getElementById("prompt-input").value.trim();
+  if(!promptText)return;
+  state.generating=true;renderCreateBtn();
+  document.getElementById("generating-bar").style.display="flex";
+  document.getElementById("empty-state").style.display="none";
+  document.getElementById("results-grid").style.display="grid";
+  setStatus("Generating via Pollinations.ai…","Free · No limits · FLUX model");
+  const r=RATIOS.find(x=>x.id===state.ratio);
+  const seed=Math.floor(Math.random()*999999);
+  const url=`${POLL_BASE}/${encodeURIComponent(getFullPrompt(promptText))}?model=flux&width=${r.w}&height=${r.h}&seed=${seed}&nologo=true&enhance=true`;
+  const img=new Image();
+  img.onload=()=>{
+    state.results=[{id:Date.now(),type:"image",url,prompt:promptText,rawPrompt:promptText},...state.results];
+    state.generating=false;document.getElementById("generating-bar").style.display="none";
+    renderCreateBtn();renderResults();
+  };
+  img.onerror=()=>{
+    setStatus("Error loading image. Try again.","Pollinations may be slow — retry in a moment");
+    state.generating=false;renderCreateBtn();
+  };
+  img.src=url;
+}
+
+async function genVideo(){
+  const promptText=document.getElementById("prompt-input").value.trim();
+  if(!promptText)return;
+  state.generating=true;renderCreateBtn();
+  document.getElementById("generating-bar").style.display="flex";
+  document.getElementById("empty-state").style.display="none";
+  document.getElementById("results-grid").style.display="grid";
+  setStatus("Connecting to free GPU…","HuggingFace Wan2.1");
+  const hfUrl=getHfUrl();
+  const hash=Math.random().toString(36).slice(2,10);
+  const r=RATIOS.find(x=>x.id===state.ratio);
+  try{
+    const joinRes=await fetch(`${hfUrl}/queue/join`,{
+      method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({data:[getFullPrompt(promptText),null,83,5.0,"14B",r.h,r.w,"none"],fn_index:0,session_hash:hash})
+    });
+    if(!joinRes.ok)throw new Error("Queue join failed — update Space URL in Settings");
+    setStatus("In queue. Waiting for free GPU…","Est. 1–3 min · Free Wan2.1");
+    if(esRef)esRef.close();
+    const es=new EventSource(`${hfUrl}/queue/data?session_hash=${hash}`);
+    esRef=es;
+    es.onmessage=(e)=>{
+      try{
+        const d=JSON.parse(e.data);
+        if(d.msg==="estimation") setStatus(d.rank>0?`Queue position ${d.rank} — hang tight…`:"Almost your turn…","Free GPU · 1–3 min");
+        else if(d.msg==="process_starts") setStatus("Rendering your animated scene…","Wan2.1 is working on it");
+        else if(d.msg==="process_generating") setStatus("Rendering frames…","Almost done");
+        else if(d.msg==="process_completed"){
+          es.close();
+          const out=d.output?.data;
+          let vUrl="";
+          if(out?.[0]){
+            if(typeof out[0]==="string"&&out[0].startsWith("http")) vUrl=out[0];
+            else if(typeof out[0]==="string") vUrl=`${hfUrl}/file=${out[0]}`;
+            else if(out[0]?.video?.path) vUrl=`${hfUrl}/file=${out[0].video.path}`;
+            else if(out[0]?.path) vUrl=`${hfUrl}/file=${out[0].path}`;
+          }
+          if(vUrl){
+            state.results=[{id:Date.now(),type:"video",url:vUrl,prompt:promptText,rawPrompt:promptText},...state.results];
+            document.getElementById("generating-bar").style.display="none";renderResults();
+          }else{
+            setStatus("Done — couldn't extract video URL.","Try a different Space in Settings");
+          }
+          state.generating=false;renderCreateBtn();
+        }else if(d.msg==="queue_full"){
+          es.close();
+          setStatus("Queue full — try a backup Space.","Settings → paste another HF Space URL");
+          state.generating=false;renderCreateBtn();
+        }
+      }catch(_){}
+    };
+    es.onerror=()=>{es.close();setStatus("Connection dropped.","Settings → update HF Space URL");state.generating=false;renderCreateBtn();};
+  }catch(err){
+    setStatus(err.message,"Check Settings → update your HF Space URL");
+    state.generating=false;renderCreateBtn();
+    document.getElementById("generating-bar").style.display="none";
+  }
+}
+
+function doCreate(){
+  if(state.generating)return;
+  if(state.mode==="image")genImage();else genVideo();
+}
+
+// PROMPT ENHANCER
+async function runEnhance(){
+  const rough=document.getElementById("enhance-input").value.trim();
+  if(!rough)return;
+  const stylePreset=STYLE_PRESETS.find(x=>x.id===state.enhancePreset);
+  const loading=document.getElementById("enhance-loading");
+  const resultsEl=document.getElementById("enhance-results");
+  const btn=document.getElementById("enhance-btn");
+  loading.style.display="flex";btn.disabled=true;btn.style.background="#1E1A14";btn.style.color="#333";
+  resultsEl.innerHTML="";
+
+  const systemPrompt=`You are a creative director for a 2D animated storytelling content brand. Your job is to expand rough scene ideas into highly detailed, vivid generation prompts optimized for AI image and video generation.
+
+Style focus: ${stylePreset?.label||"2D flat animation"}${stylePreset?.suffix||""}.
+
+Rules:
+- Always write in prompt format (no sentences, use comma-separated descriptors)
+- Include: subject, action, setting, lighting, mood, color palette, camera angle, animation style
+- Keep it under 120 words
+- Make it cinematic and specific — avoid generic descriptions
+- Output ONLY the enhanced prompt, no preamble or explanation`;
+
+  try{
+    const res=await fetch("https://api.anthropic.com/v1/messages",{
+      method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({
+        model:"claude-sonnet-4-20250514",max_tokens:300,
+        system:systemPrompt,
+        messages:[{role:"user",content:`Expand this rough scene idea into a detailed generation prompt:\n\n"${rough}"`}]
+      })
+    });
+    const data=await res.json();
+    const enhanced=data.content?.[0]?.text||"Could not generate. Try again.";
+
+    resultsEl.innerHTML=`
+      <div style="font-size:9px;color:#3A3730;letter-spacing:0.1em;margin-bottom:8px">ENHANCED PROMPT</div>
+      <div class="card" style="padding:0">
+        <div style="padding:14px 16px;font-size:12px;color:#EDE9E2;line-height:1.75;letter-spacing:0.01em">${enhanced}</div>
+        <div style="border-top:0.5px solid #252218;padding:10px 14px;display:flex;gap:8px">
+          <button onclick="useEnhanced(this)" data-prompt="${enhanced.replace(/"/g,'&quot;')}" style="flex:1;background:transparent;border:0.5px solid #C8860A;color:#C8860A;padding:6px 0;border-radius:5px;font-size:9px;letter-spacing:0.08em">USE FOR IMAGE →</button>
+          <button onclick="useEnhancedVideo(this)" data-prompt="${enhanced.replace(/"/g,'&quot;')}" style="flex:1;background:transparent;border:0.5px solid #252218;color:#444;padding:6px 0;border-radius:5px;font-size:9px;letter-spacing:0.08em">USE FOR VIDEO →</button>
+          <button onclick="copyText(this)" data-prompt="${enhanced.replace(/"/g,'&quot;')}" style="background:transparent;border:0.5px solid #252218;color:#444;padding:6px 12px;border-radius:5px;font-size:9px;letter-spacing:0.06em">COPY</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button onclick="runEnhance()" style="background:transparent;border:0.5px solid #252218;color:#444;padding:6px 14px;border-radius:5px;font-size:9px;letter-spacing:0.08em">↻ REGENERATE</button>
+      </div>`;
+  }catch(err){
+    resultsEl.innerHTML=`<div style="font-size:11px;color:#555;padding:14px">Error: ${err.message}</div>`;
+  }finally{
+    loading.style.display="none";btn.disabled=false;btn.style.background="#C8860A";btn.style.color="#0C0B09";
+  }
+}
+
+function useEnhanced(btn){
+  const p=btn.getAttribute("data-prompt");
+  document.getElementById("prompt-input").value=p;
+  state.mode="image";setNav("media");renderModeToggle();
+}
+function useEnhancedVideo(btn){
+  const p=btn.getAttribute("data-prompt");
+  document.getElementById("prompt-input").value=p;
+  state.mode="video";setNav("media");renderModeToggle();
+}
+function copyText(btn){
+  const p=btn.getAttribute("data-prompt");
+  navigator.clipboard.writeText(p).then(()=>{const orig=btn.textContent;btn.textContent="COPIED!";setTimeout(()=>btn.textContent=orig,1500);});
+}
+
+document.getElementById("prompt-input").addEventListener("input",renderCreateBtn);
+document.addEventListener("keydown",e=>{
+  if((e.metaKey||e.ctrlKey)&&e.key==="Enter"){e.preventDefault();
+    if(state.activeNav==="media")doCreate();
+    else if(state.activeNav==="enhance")runEnhance();
+  }
+});
+
+render();
+</script>
+</body>
+</html>
