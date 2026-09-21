@@ -1,0 +1,19 @@
+{
+  "name": "scroll-tell-studio",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A lightweight local-first content workspace for AI-assisted publishing.",
+  "type": "module",
+  "packageManager": "pnpm@11.24.0",
+  "scripts": {
+    "dev": "pnpm --filter @scrolltell/web dev",
+    "build": "pnpm --filter @scrolltell/web build",
+    "typecheck": "pnpm --filter @scrolltell/db typecheck && pnpm --filter @scrolltell/web typecheck",
+    "db:generate": "pnpm --filter @scrolltell/db db:generate",
+    "db:migrate": "pnpm --filter @scrolltell/db db:migrate",
+    "db:studio": "pnpm --filter @scrolltell/db db:studio"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.3"
+  }
+}
