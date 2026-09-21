@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   Archive,
   ArrowUpRight,
@@ -55,10 +55,29 @@ function App() {
   const [showComposer, setShowComposer] = useState(false)
   const [draft, setDraft] = useState('')
   const [saved, setSaved] = useState(false)
+  const [serverOnline, setServerOnline] = useState(false)
 
-  const createDraft = () => {
-    setSaved(true)
-    window.setTimeout(() => setSaved(false), 2200)
+  useEffect(() => {
+    fetch('http://127.0.0.1:8787/health')
+      .then((response) => setServerOnline(response.ok))
+      .catch(() => setServerOnline(false))
+  }, [])
+
+  const createDraft = async () => {
+    const text = draft.trim()
+    const title = text.split('\n')[0]?.slice(0, 160) || 'Untitled draft'
+    try {
+      const response = await fetch('http://127.0.0.1:8787/api/content', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ title, description: text, sourcePrompt: text, contentType: 'text', status: 'draft' }),
+      })
+      if (!response.ok) throw new Error('Could not save draft')
+      setSaved(true)
+      window.setTimeout(() => setSaved(false), 2200)
+    } catch {
+      setSaved(false)
+    }
   }
 
   return (

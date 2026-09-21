@@ -7,13 +7,17 @@
   "packageManager": "pnpm@11.24.0",
   "scripts": {
     "dev": "pnpm --filter @scrolltell/web dev",
+    "dev:all": "concurrently -n web,server -c blue,green \"pnpm dev\" \"pnpm server:dev\"",
+    "server:dev": "pnpm --filter @scrolltell/server dev",
+    "server:start": "pnpm --filter @scrolltell/server start",
     "build": "pnpm --filter @scrolltell/web build",
-    "typecheck": "pnpm --filter @scrolltell/db typecheck && pnpm --filter @scrolltell/web typecheck",
+    "typecheck": "pnpm --filter @scrolltell/db typecheck && pnpm --filter @scrolltell/server typecheck && pnpm --filter @scrolltell/web typecheck",
     "db:generate": "pnpm --filter @scrolltell/db db:generate",
     "db:migrate": "pnpm --filter @scrolltell/db db:migrate",
     "db:studio": "pnpm --filter @scrolltell/db db:studio"
   },
   "devDependencies": {
+    "concurrently": "^9.1.2",
     "typescript": "^5.7.3"
   }
 }
