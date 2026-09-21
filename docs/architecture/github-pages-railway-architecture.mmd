@@ -1,0 +1,47 @@
+flowchart LR
+    Browser[User browser]
+
+    subgraph GitHub[GitHub]
+        Pages[GitHub Pages\nReact + Vite frontend\n/static assets]
+        Actions[GitHub Actions\nCI: typecheck + build\nPages: build + deploy]
+        Repo[(scroll-tell-studio\nsource repository)]
+    end
+
+    subgraph Railway[Railway production service]
+        API[Fastify Node.js API\nHTTPS public domain\n0.0.0.0:$PORT]
+        OAuth[OAuth callbacks\nGitHub / Google]
+        MCP[Streamable HTTP MCP\n/mcp + Bearer token]
+        Volume[(Railway Volume\n/app/data)]
+        SQLite[(SQLite\nscrolltell.db)]
+        API --> OAuth
+        API --> MCP
+        API --> Volume
+        Volume --> SQLite
+    end
+
+    GitHubOAuth[GitHub OAuth]
+    GoogleOAuth[Google OAuth]
+    Claude[Claude / Claude Code]
+    Manus[Manus custom MCP connector]
+
+    Browser -->|HTTPS loads app| Pages
+    Pages -->|HTTPS REST + cookies\nVITE_API_URL| API
+    Browser -->|OAuth redirect| OAuth
+    OAuth -->|authorize| GitHubOAuth
+    OAuth -->|authorize| GoogleOAuth
+    GitHubOAuth -->|callback| OAuth
+    GoogleOAuth -->|callback| OAuth
+    Claude -->|HTTPS MCP + bearer token| MCP
+    Manus -->|HTTPS MCP + bearer token| MCP
+    Repo --> Actions
+    Actions -->|deploy static artifact| Pages
+    Actions -.->|does not host API or DB| Railway
+
+    classDef public fill:#e9f2ff,stroke:#2e6db4,color:#102a43
+    classDef service fill:#eaf8f0,stroke:#2d8a56,color:#143d26
+    classDef storage fill:#fff4df,stroke:#c27b18,color:#4a2d05
+    classDef external fill:#f2ecff,stroke:#7654b7,color:#2e2052
+    class Pages,API,MCP,OAuth public
+    class Actions,Repo service
+    class Volume,SQLite storage
+    class GitHubOAuth,GoogleOAuth,Claude,Manus external
