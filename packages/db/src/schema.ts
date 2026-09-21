@@ -6,8 +6,40 @@ const timestamps = {
   updatedAt: text('updated_at').notNull().$defaultFn(() => new Date().toISOString()),
 }
 
+export const users = sqliteTable('users', {
+  id: text('id').primaryKey(),
+  email: text('email').notNull(),
+  displayName: text('display_name').notNull(),
+  status: text('status', { enum: ['active', 'suspended', 'deleted'] }).notNull().default('active'),
+  ...timestamps,
+}, (table) => ({
+  emailIdx: uniqueIndex('users_email_idx').on(table.email),
+}))
+
+export const organizations = sqliteTable('organizations', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  slug: text('slug').notNull(),
+  plan: text('plan', { enum: ['free', 'pro', 'enterprise'] }).notNull().default('free'),
+  ...timestamps,
+}, (table) => ({
+  slugIdx: uniqueIndex('organizations_slug_idx').on(table.slug),
+}))
+
+export const organizationMembers = sqliteTable('organization_members', {
+  id: text('id').primaryKey(),
+  organizationId: text('organization_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  role: text('role', { enum: ['owner', 'admin', 'member'] }).notNull().default('member'),
+  ...timestamps,
+}, (table) => ({
+  membershipIdx: uniqueIndex('organization_membership_idx').on(table.organizationId, table.userId),
+}))
+
 export const workspaces = sqliteTable('workspaces', {
   id: text('id').primaryKey(),
+  organizationId: text('organization_id').notNull().default('default-org').references(() => organizations.id, { onDelete: 'cascade' }),
+  ownerUserId: text('owner_user_id').references(() => users.id, { onDelete: 'set null' }),
   name: text('name').notNull(),
   slug: text('slug').notNull(),
   ...timestamps,
@@ -116,6 +148,21 @@ export const workspaceRelations = relations(workspaces, ({ many }) => ({
   connectedAccounts: many(connectedAccounts),
   jobs: many(jobs),
   auditEvents: many(auditEvents),
+}))
+
+export const organizationRelations = relations(organizations, ({ many }) => ({
+  members: many(organizationMembers),
+  workspaces: many(workspaces),
+}))
+
+export const userRelations = relations(users, ({ many }) => ({
+  memberships: many(organizationMembers),
+  ownedWorkspaces: many(workspaces),
+}))
+
+export const membershipRelations = relations(organizationMembers, ({ one }) => ({
+  organization: one(organizations, { fields: [organizationMembers.organizationId], references: [organizations.id] }),
+  user: one(users, { fields: [organizationMembers.userId], references: [users.id] }),
 }))
 
 export const contentRelations = relations(contentItems, ({ one, many }) => ({

@@ -4,7 +4,7 @@ import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/
 import cors from '@fastify/cors'
 import Fastify from 'fastify'
 import { db } from '@scrolltell/db'
-import { connectedAccounts, contentItems, contentVariants, destinations, jobs, workspaces } from '@scrolltell/db/schema'
+import { connectedAccounts, contentItems, contentVariants, destinations, jobs, organizations, workspaces } from '@scrolltell/db/schema'
 import { and, desc, eq } from 'drizzle-orm'
 import { z } from 'zod'
 import { createMcpServer } from './mcp.js'
@@ -16,6 +16,7 @@ const app = Fastify({ logger: true })
 await app.register(cors, { origin: true })
 
 async function ensureSeedData() {
+  await db.insert(organizations).values({ id: 'default-org', name: 'Personal organization', slug: 'personal' }).onConflictDoNothing()
   await db.insert(workspaces).values({ id: 'personal', name: 'Personal workspace', slug: 'personal' }).onConflictDoNothing()
   const catalog = [
     ['facebook', 'Facebook'], ['instagram', 'Instagram'], ['threads', 'Threads'],
