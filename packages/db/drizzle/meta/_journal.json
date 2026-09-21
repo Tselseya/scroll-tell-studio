@@ -15,6 +15,13 @@
       "when": 1789995463024,
       "tag": "0001_smooth_mother_askani",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1789997238176,
+      "tag": "0002_long_the_stranger",
+      "breakpoints": true
     }
   ]
 }

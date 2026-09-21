@@ -36,6 +36,40 @@ export const organizationMembers = sqliteTable('organization_members', {
   membershipIdx: uniqueIndex('organization_membership_idx').on(table.organizationId, table.userId),
 }))
 
+export const oauthAccounts = sqliteTable('oauth_accounts', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  provider: text('provider', { enum: ['github', 'google'] }).notNull(),
+  providerAccountId: text('provider_account_id').notNull(),
+  ...timestamps,
+}, (table) => ({
+  providerAccountIdx: uniqueIndex('oauth_provider_account_idx').on(table.provider, table.providerAccountId),
+}))
+
+export const sessions = sqliteTable('sessions', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  tokenHash: text('token_hash').notNull(),
+  expiresAt: text('expires_at').notNull(),
+  createdAt: text('created_at').notNull().$defaultFn(() => new Date().toISOString()),
+}, (table) => ({
+  tokenIdx: uniqueIndex('sessions_token_hash_idx').on(table.tokenHash),
+}))
+
+export const consentRecords = sqliteTable('consent_records', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  organizationId: text('organization_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+  purpose: text('purpose', { enum: ['terms_acknowledgement', 'privacy_notice', 'analytics', 'marketing', 'platform_automation', 'publish_confirmation'] }).notNull(),
+  choice: text('choice', { enum: ['granted', 'declined', 'withdrawn'] }).notNull(),
+  policyVersion: text('policy_version').notNull(),
+  source: text('source').notNull(),
+  locale: text('locale'),
+  userAgentHash: text('user_agent_hash'),
+  supersedesConsentId: text('supersedes_consent_id'),
+  createdAt: text('created_at').notNull().$defaultFn(() => new Date().toISOString()),
+})
+
 export const workspaces = sqliteTable('workspaces', {
   id: text('id').primaryKey(),
   organizationId: text('organization_id').notNull().default('default-org').references(() => organizations.id, { onDelete: 'cascade' }),

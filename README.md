@@ -4,7 +4,7 @@ ScrollTell Studio is a lightweight, local-first content workspace for drafting, 
 
 ## Current foundation
 
-The repository now contains a native Node.js monorepo with a React/Vite/Tailwind dashboard and a Drizzle ORM schema backed by SQLite. The dashboard is currently a frontend-first workspace shell; the local server, AI provider adapters, MCP server, and publishing adapters will be added incrementally.
+The repository contains a native Node.js monorepo with a React/Vite/Tailwind dashboard, a Fastify API, and a Drizzle ORM schema backed by SQLite. The API now includes GitHub/Google OAuth session authentication, organization-scoped workspace authorization, and versioned consent persistence. AI provider adapters, MCP authorization, and publishing adapters continue to be added incrementally.
 
 ## Requirements
 
@@ -27,6 +27,31 @@ pnpm dev:all
 ```
 
 The API server listens on `http://127.0.0.1:8787`. Its health endpoint is `GET /health`, and the dashboard-facing API is under `/api`.
+
+## Open the actual interface
+
+The interface is the React dashboard in `apps/web`, not the repository README. Start the full local app with:
+
+```bash
+pnpm install
+pnpm db:migrate
+pnpm dev:all
+```
+
+Then open <http://localhost:5173>. You will see the ScrollTell sign-in screen. Configure at least one OAuth provider before signing in:
+
+```bash
+export APP_URL=http://127.0.0.1:8787
+export WEB_APP_URL=http://127.0.0.1:5173
+export GITHUB_CLIENT_ID=your-client-id
+export GITHUB_CLIENT_SECRET=your-client-secret
+```
+
+For GitHub OAuth, use `http://127.0.0.1:8787/auth/github/callback` as the callback URL. Google uses `http://127.0.0.1:8787/auth/google/callback`. OAuth secrets belong only in the server environment and must never be committed.
+
+The previous GitHub Pages URL displayed the README because the repository did not have a Pages build workflow and GitHub Pages was serving the repository root. A workflow is now included at `.github/workflows/pages.yml`; after it runs, the static dashboard will be available at <https://tselseya.github.io/scroll-tell-studio/>. GitHub Pages can host the visual frontend, but it cannot run the Node.js API, SQLite database, OAuth secrets, or publishing workers. For sign-in and real data, set `VITE_API_URL` to a separately hosted HTTPS API and configure that API's OAuth callback URLs accordingly.
+
+Without a running API, the Pages dashboard is only a static shell and cannot authenticate or save content. For a fully working personal instance, use the local URL first.
 
 ## Verify and build
 
