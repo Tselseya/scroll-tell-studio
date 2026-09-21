@@ -1,0 +1,36 @@
+services:
+  - type: web
+    name: scrolltell-api
+    runtime: node
+    plan: starter
+    region: singapore
+    buildCommand: corepack enable && pnpm install --frozen-lockfile
+    startCommand: pnpm server:prod
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: HOST
+        value: 0.0.0.0
+      - key: DATABASE_URL
+        value: /var/data/scrolltell.db
+      - key: APP_URL
+        sync: false
+      - key: WEB_APP_URL
+        sync: false
+      - key: WEB_ORIGIN
+        sync: false
+      - key: GITHUB_CLIENT_ID
+        sync: false
+      - key: GITHUB_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: MCP_AUTH_TOKEN
+        sync: false
+    disk:
+      name: scrolltell-data
+      mountPath: /var/data
+      sizeGB: 1

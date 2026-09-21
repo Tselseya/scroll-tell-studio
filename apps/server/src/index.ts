@@ -12,7 +12,7 @@ import { beginOAuth, clearSession, completeOAuth, getAuthContext, getProviderCon
 import { createMcpServer } from './mcp.js'
 
 const port = Number(process.env.PORT ?? 8787)
-const host = process.env.HOST ?? '127.0.0.1'
+const host = process.env.HOST ?? (process.env.NODE_ENV === 'production' ? '0.0.0.0' : '127.0.0.1')
 const app = Fastify({ logger: true })
 await app.register(cookie)
 await app.register(cors, { origin: process.env.WEB_ORIGIN ?? true, credentials: true })
@@ -174,6 +174,7 @@ app.post('/api/jobs/publish', async (request, reply) => {
 
 app.post('/mcp', async (request, reply) => {
   const expected = process.env.MCP_AUTH_TOKEN
+  if (process.env.NODE_ENV === 'production' && !expected) return reply.code(503).send({ error: 'MCP_AUTH_TOKEN is not configured' })
   if (expected && request.headers.authorization !== `Bearer ${expected}`) return reply.code(401).send({ error: 'MCP authentication required' })
   const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined }); const server = createMcpServer(); await server.connect(transport); await transport.handleRequest(request.raw, reply.raw, request.body); reply.hijack()
 })

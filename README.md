@@ -105,3 +105,5 @@ data/          Gitignored local database and media vault
 ```
 
 See [`MVP-ARCHITECTURE.md`](./MVP-ARCHITECTURE.md) for the full product and integration plan.
+
+Deployment instructions are in [`docs/DEPLOYMENT.md`](./docs/DEPLOYMENT.md), and Claude/Manus MCP setup is in [`docs/MCP-CONNECTIONS.md`](./docs/MCP-CONNECTIONS.md).
