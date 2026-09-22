@@ -4,6 +4,7 @@ import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/
 import cors from '@fastify/cors'
 import cookie from '@fastify/cookie'
 import Fastify from 'fastify'
+import OpenAI from 'openai'
 import { db } from '@scrolltell/db'
 import { connectedAccounts, consentRecords, contentItems, contentVariants, destinations, jobs, organizationMembers, organizations, workspaces } from '@scrolltell/db/schema'
 import { and, desc, eq } from 'drizzle-orm'
@@ -26,6 +27,12 @@ async function ensureSeedData() {
 await ensureSeedData()
 
 const jsonBody = z.record(z.unknown())
+const aiMessage = z.object({ role: z.enum(['user', 'assistant']), content: z.string().min(1).max(12000) })
+const aiPayload = z.object({
+  messages: z.array(aiMessage).min(1).max(20),
+  draft: z.string().max(30000).optional(),
+  action: z.enum(['chat', 'rewrite', 'shorten', 'expand', 'repurpose']).default('chat'),
+})
 const contentPayload = z.object({
   workspaceId: z.string().min(1).default('personal'), title: z.string().min(1).max(160), description: z.string().optional(),
   contentType: z.enum(['text', 'image', 'carousel', 'short_video', 'long_video']).default('text'),
@@ -134,6 +141,37 @@ app.patch('/api/content/:id', async (request, reply) => {
   await db.update(contentItems).set({ ...patch.data, updatedAt: new Date().toISOString() }).where(eq(contentItems.id, id))
   const [item] = await db.select().from(contentItems).where(eq(contentItems.id, id)).limit(1)
   return { item }
+})
+
+app.post('/api/ai/chat', async (request, reply) => {
+  const auth = await requireAuth(request, reply); if (!auth) return
+  const parsed = aiPayload.safeParse(request.body)
+  if (!parsed.success) return reply.code(400).send({ error: 'Invalid AI request', details: parsed.error.flatten() })
+  if (!process.env.AI_API_KEY) return reply.code(503).send({ error: 'AI provider is not configured. Set AI_API_KEY on the server.' })
+
+  const client = new OpenAI({ apiKey: process.env.AI_API_KEY, baseURL: process.env.AI_BASE_URL || undefined })
+  const actionInstructions = {
+    chat: 'Answer the user as an editorial copilot. Be concise and practical.',
+    rewrite: 'Rewrite the draft for clarity and stronger flow. Return only the rewritten copy unless the user asks for explanation.',
+    shorten: 'Shorten the draft while preserving the main idea, voice, and useful details. Return only the shortened copy.',
+    expand: 'Expand the draft with useful detail and a coherent structure. Return only the expanded copy.',
+    repurpose: 'Turn the draft into platform-ready copy. Ask which platform only if it is not inferable; otherwise provide a strong concise version.',
+  }[parsed.data.action]
+  const draftContext = parsed.data.draft ? `\n\nCurrent draft:\n${parsed.data.draft}` : ''
+  try {
+    const response = await client.chat.completions.create({
+      model: process.env.AI_MODEL || 'gpt-5-mini',
+      messages: [
+        { role: 'system', content: `You are ScrollTell Studio's editorial copilot. ${actionInstructions} Do not claim to have published anything.${draftContext}` },
+        ...parsed.data.messages,
+      ],
+      max_completion_tokens: 1600,
+    })
+    return { message: response.choices[0]?.message?.content?.trim() || 'The provider returned an empty response.', model: response.model }
+  } catch (error) {
+    request.log.error(error)
+    return reply.code(502).send({ error: 'The configured AI provider could not complete the request.' })
+  }
 })
 
 app.get('/api/content/:id/variants', async (request, reply) => {

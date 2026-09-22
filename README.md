@@ -53,6 +53,20 @@ The previous GitHub Pages URL displayed the README because the repository did no
 
 Without a running API, the Pages dashboard is only a static shell and cannot authenticate or save content. For a fully working personal instance, use the local URL first.
 
+## Editor and AI copilot
+
+After signing in, click **Create content** to open the draft editor. The editor supports a title, editable HTML text, bold, italic, strikethrough, bulleted lists, numbered lists, undo, redo, manual save, and debounced autosave for existing drafts. The **AI copilot** panel can chat about the active draft or request rewrite, shorten, expand, and repurpose actions.
+
+The copilot uses an OpenAI-compatible provider configured on the server. Set these variables in the API environment:
+
+```bash
+AI_API_KEY=your-provider-key
+AI_BASE_URL=https://api.openai.com/v1
+AI_MODEL=gpt-5-mini
+```
+
+The provider key is never sent to the browser. Without `AI_API_KEY`, the editor and draft persistence still work, but copilot requests return a configuration error. The provider boundary can point at another OpenAI-compatible service by changing `AI_BASE_URL` and `AI_MODEL`.
+
 ## Verify and build
 
 ```bash
