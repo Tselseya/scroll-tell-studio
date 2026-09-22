@@ -67,6 +67,8 @@ AI_MODEL=gpt-5-mini
 
 The provider key is never sent to the browser. Without `AI_API_KEY`, the editor and draft persistence still work, but copilot requests return a configuration error. The provider boundary can point at another OpenAI-compatible service by changing `AI_BASE_URL` and `AI_MODEL`.
 
+See [`docs/EDITOR-WORKFLOW.md`](./docs/EDITOR-WORKFLOW.md) for rich-media uploads, content-library workflow, version history, platform previews, direct Claude configuration, and Manus MCP setup.
+
 ## Verify and build
 
 ```bash

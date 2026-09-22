@@ -1,12 +1,16 @@
 import { randomUUID, createHash } from 'node:crypto'
+import { createReadStream } from 'node:fs'
+import fs from 'node:fs/promises'
+import path from 'node:path'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
 import cors from '@fastify/cors'
+import multipart from '@fastify/multipart'
 import cookie from '@fastify/cookie'
 import Fastify from 'fastify'
 import OpenAI from 'openai'
 import { db } from '@scrolltell/db'
-import { connectedAccounts, consentRecords, contentItems, contentVariants, destinations, jobs, organizationMembers, organizations, workspaces } from '@scrolltell/db/schema'
+import { connectedAccounts, consentRecords, contentItems, contentVariants, contentVersions, destinations, jobs, mediaAssets, organizationMembers, organizations, workspaces } from '@scrolltell/db/schema'
 import { and, desc, eq } from 'drizzle-orm'
 import { z } from 'zod'
 import { beginOAuth, clearSession, completeOAuth, getAuthContext, getProviderConfig, requireAuth } from './auth.js'
@@ -16,6 +20,7 @@ const port = Number(process.env.PORT ?? 8787)
 const host = process.env.HOST ?? (process.env.NODE_ENV === 'production' ? '0.0.0.0' : '127.0.0.1')
 const app = Fastify({ logger: true })
 await app.register(cookie)
+await app.register(multipart, { limits: { fileSize: 50 * 1024 * 1024, files: 1 } })
 await app.register(cors, { origin: process.env.WEB_ORIGIN ?? true, credentials: true })
 
 async function ensureSeedData() {
@@ -29,6 +34,8 @@ await ensureSeedData()
 const jsonBody = z.record(z.unknown())
 const aiMessage = z.object({ role: z.enum(['user', 'assistant']), content: z.string().min(1).max(12000) })
 const aiPayload = z.object({
+  provider: z.enum(['openai', 'claude', 'manus']).default('openai'),
+  model: z.string().max(120).optional(),
   messages: z.array(aiMessage).min(1).max(20),
   draft: z.string().max(30000).optional(),
   action: z.enum(['chat', 'rewrite', 'shorten', 'expand', 'repurpose']).default('chat'),
@@ -68,6 +75,15 @@ app.get('/auth/:provider/callback', async (request, reply) => {
     return reply.code(400).send({ error: error instanceof Error ? error.message : 'OAuth sign-in failed' })
   }
 })
+app.get('/api/ai/providers', async (request, reply) => {
+  const auth = await requireAuth(request, reply); if (!auth) return
+  return { providers: [
+    { id: 'openai', label: 'OpenAI-compatible', configured: Boolean(process.env.AI_API_KEY), model: process.env.AI_MODEL || 'gpt-5-mini' },
+    { id: 'claude', label: 'Claude API', configured: Boolean(process.env.CLAUDE_API_KEY), model: process.env.CLAUDE_MODEL || 'claude-sonnet-4-6' },
+    { id: 'manus', label: 'Manus via MCP', configured: Boolean(process.env.MANUS_MCP_URL), model: null, mode: 'mcp' },
+  ] }
+})
+
 app.get('/api/auth/me', async (request, reply) => {
   const auth = await getAuthContext(request)
   if (!auth) return reply.code(401).send({ error: 'Authentication required' })
@@ -126,7 +142,7 @@ app.post('/api/content', async (request, reply) => {
   const auth = await requireAuth(request, reply); if (!auth) return
   const parsed = contentPayload.safeParse(request.body); if (!parsed.success) return reply.code(400).send({ error: 'Invalid content payload', details: parsed.error.flatten() })
   const scope = await getWorkspace(request, parsed.data.workspaceId); if (!scope) return reply.code(403).send({ error: 'Workspace access denied' })
-  const id = randomUUID(); await db.insert(contentItems).values({ id, ...parsed.data })
+  const id = randomUUID(); await db.insert(contentItems).values({ id, ...parsed.data }); await db.insert(contentVersions).values({ id: randomUUID(), contentItemId: id, versionNumber: 1, title: parsed.data.title, body: parsed.data.description ?? '', source: 'manual', createdBy: auth.user.id })
   const [item] = await db.select().from(contentItems).where(eq(contentItems.id, id)).limit(1)
   return reply.code(201).send({ item })
 })
@@ -138,7 +154,7 @@ app.patch('/api/content/:id', async (request, reply) => {
   if (!patch.success) return reply.code(400).send({ error: 'Invalid content patch', details: patch.error.flatten() })
   const [owned] = await db.select({ id: contentItems.id }).from(contentItems).innerJoin(workspaces, eq(contentItems.workspaceId, workspaces.id)).where(and(eq(contentItems.id, id), eq(workspaces.organizationId, auth.organizationId))).limit(1)
   if (!owned) return reply.code(404).send({ error: 'Content item not found' })
-  await db.update(contentItems).set({ ...patch.data, updatedAt: new Date().toISOString() }).where(eq(contentItems.id, id))
+  const [before] = await db.select().from(contentItems).where(eq(contentItems.id, id)).limit(1); const nextTitle = patch.data.title ?? before.title; const nextBody = patch.data.description ?? before.description ?? ''; const [latestVersion] = await db.select().from(contentVersions).where(eq(contentVersions.contentItemId, id)).orderBy(desc(contentVersions.versionNumber)).limit(1); await db.update(contentItems).set({ ...patch.data, updatedAt: new Date().toISOString() }).where(eq(contentItems.id, id)); if (patch.data.title !== undefined || patch.data.description !== undefined) await db.insert(contentVersions).values({ id: randomUUID(), contentItemId: id, versionNumber: (latestVersion?.versionNumber ?? 0) + 1, title: nextTitle, body: nextBody, source: 'manual', createdBy: auth.user.id })
   const [item] = await db.select().from(contentItems).where(eq(contentItems.id, id)).limit(1)
   return { item }
 })
@@ -147,9 +163,10 @@ app.post('/api/ai/chat', async (request, reply) => {
   const auth = await requireAuth(request, reply); if (!auth) return
   const parsed = aiPayload.safeParse(request.body)
   if (!parsed.success) return reply.code(400).send({ error: 'Invalid AI request', details: parsed.error.flatten() })
-  if (!process.env.AI_API_KEY) return reply.code(503).send({ error: 'AI provider is not configured. Set AI_API_KEY on the server.' })
-
-  const client = new OpenAI({ apiKey: process.env.AI_API_KEY, baseURL: process.env.AI_BASE_URL || undefined })
+  if (parsed.data.provider === 'manus') return reply.code(501).send({ error: 'Manus is an MCP/agent integration, not a synchronous model provider. Connect ScrollTell as a custom MCP server in Manus, then ask Manus to edit drafts.' })
+  const apiKey = parsed.data.provider === 'claude' ? process.env.CLAUDE_API_KEY : process.env.AI_API_KEY
+  if (!apiKey) return reply.code(503).send({ error: `${parsed.data.provider} provider is not configured on the server.` })
+  const client = new OpenAI({ apiKey, baseURL: parsed.data.provider === 'claude' ? (process.env.CLAUDE_BASE_URL || 'https://api.anthropic.com/v1') : (process.env.AI_BASE_URL || undefined) })
   const actionInstructions = {
     chat: 'Answer the user as an editorial copilot. Be concise and practical.',
     rewrite: 'Rewrite the draft for clarity and stronger flow. Return only the rewritten copy unless the user asks for explanation.',
@@ -172,6 +189,55 @@ app.post('/api/ai/chat', async (request, reply) => {
     request.log.error(error)
     return reply.code(502).send({ error: 'The configured AI provider could not complete the request.' })
   }
+})
+
+
+app.get('/api/content/:id/versions', async (request, reply) => {
+  const auth = await requireAuth(request, reply); if (!auth) return
+  const { id } = request.params as { id: string }
+  const [owned] = await db.select({ id: contentItems.id }).from(contentItems).innerJoin(workspaces, eq(contentItems.workspaceId, workspaces.id)).where(and(eq(contentItems.id, id), eq(workspaces.organizationId, auth.organizationId))).limit(1)
+  if (!owned) return reply.code(404).send({ error: 'Content item not found' })
+  return { versions: await db.select().from(contentVersions).where(eq(contentVersions.contentItemId, id)).orderBy(desc(contentVersions.versionNumber)).limit(50) }
+})
+
+app.post('/api/content/:id/versions/:versionId/restore', async (request, reply) => {
+  const auth = await requireAuth(request, reply); if (!auth) return
+  const { id, versionId } = request.params as { id: string; versionId: string }
+  const [owned] = await db.select({ id: contentItems.id }).from(contentItems).innerJoin(workspaces, eq(contentItems.workspaceId, workspaces.id)).where(and(eq(contentItems.id, id), eq(workspaces.organizationId, auth.organizationId))).limit(1)
+  const [version] = await db.select().from(contentVersions).where(and(eq(contentVersions.id, versionId), eq(contentVersions.contentItemId, id))).limit(1)
+  if (!owned || !version) return reply.code(404).send({ error: 'Version not found' })
+  const [latest] = await db.select().from(contentVersions).where(eq(contentVersions.contentItemId, id)).orderBy(desc(contentVersions.versionNumber)).limit(1)
+  await db.update(contentItems).set({ title: version.title, description: version.body, sourcePrompt: version.body, updatedAt: new Date().toISOString() }).where(eq(contentItems.id, id))
+  await db.insert(contentVersions).values({ id: randomUUID(), contentItemId: id, versionNumber: (latest?.versionNumber ?? 0) + 1, title: version.title, body: version.body, source: 'restore', createdBy: auth.user.id })
+  return { ok: true, title: version.title, body: version.body }
+})
+
+app.get('/api/media', async (request, reply) => {
+  const auth = await requireAuth(request, reply); if (!auth) return
+  const { workspaceId = 'personal' } = request.query as { workspaceId?: string }; const scope = await getWorkspace(request, workspaceId); if (!scope) return reply.code(403).send({ error: 'Workspace access denied' })
+  return { assets: await db.select().from(mediaAssets).where(eq(mediaAssets.workspaceId, scope.workspace.id)).orderBy(desc(mediaAssets.createdAt)).limit(100) }
+})
+
+app.post('/api/media/upload', async (request, reply) => {
+  const auth = await requireAuth(request, reply); if (!auth) return
+  const scope = await getWorkspace(request, 'personal'); if (!scope) return reply.code(403).send({ error: 'Workspace access denied' })
+  const part = await request.file(); if (!part) return reply.code(400).send({ error: 'A media file is required' })
+  const allowed = ['image/', 'video/', 'audio/']; if (!allowed.some((prefix) => part.mimetype.startsWith(prefix))) return reply.code(415).send({ error: 'Only image, video, and audio files are supported' })
+  const mediaRoot = path.resolve(process.env.MEDIA_DIR ?? path.resolve(process.cwd(), '../../data/media')); await fs.mkdir(mediaRoot, { recursive: true })
+  const id = randomUUID(); const safeName = part.filename.replace(/[^a-zA-Z0-9._-]/g, '_'); const storedName = id + '-' + safeName; const storedPath = path.join(mediaRoot, storedName); await fs.writeFile(storedPath, await part.toBuffer())
+  const [asset] = await db.insert(mediaAssets).values({ id, workspaceId: scope.workspace.id, filename: part.filename, storagePath: storedPath, mimeType: part.mimetype, sizeBytes: (await fs.stat(storedPath)).size }).returning()
+  return reply.code(201).send({ asset: { ...asset, url: '/api/media/' + id } })
+})
+
+app.get('/api/media/:id', async (request, reply) => {
+  const auth = await requireAuth(request, reply); if (!auth) return
+  const { id } = request.params as { id: string }; const [asset] = await db.select().from(mediaAssets).innerJoin(workspaces, eq(mediaAssets.workspaceId, workspaces.id)).where(and(eq(mediaAssets.id, id), eq(workspaces.organizationId, auth.organizationId))).limit(1)
+  if (!asset) return reply.code(404).send({ error: 'Media asset not found' }); return reply.type(asset.media_assets.mimeType).send(createReadStream(asset.media_assets.storagePath))
+})
+
+app.get('/api/platform-previews', async (request, reply) => {
+  const auth = await requireAuth(request, reply); if (!auth) return
+  return { previews: { x: { label: 'X / Twitter', maxCharacters: 280, media: ['image', 'video'], tips: 'Short, direct text with a strong first line.' }, threads: { label: 'Threads', maxCharacters: 500, media: ['image', 'video'], tips: 'Conversational text and a clear point of view.' }, instagram: { label: 'Instagram', maxCharacters: 2200, media: ['image', 'video', 'carousel'], tips: 'Visual-first caption with a concise hook.' }, facebook: { label: 'Facebook', maxCharacters: 63206, media: ['image', 'video'], tips: 'Longer context and discussion prompts work well.' }, tiktok: { label: 'TikTok', maxCharacters: 4000, media: ['video'], tips: 'Short caption; the video carries the story.' }, youtube: { label: 'YouTube', maxCharacters: 5000, media: ['video'], tips: 'Use a searchable title and description.' } } }
 })
 
 app.get('/api/content/:id/variants', async (request, reply) => {

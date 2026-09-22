@@ -92,6 +92,19 @@ export const contentItems = sqliteTable('content_items', {
   ...timestamps,
 })
 
+export const contentVersions = sqliteTable('content_versions', {
+  id: text('id').primaryKey(),
+  contentItemId: text('content_item_id').notNull().references(() => contentItems.id, { onDelete: 'cascade' }),
+  versionNumber: integer('version_number').notNull(),
+  title: text('title').notNull(),
+  body: text('body').notNull().default(''),
+  source: text('source', { enum: ['manual', 'ai', 'restore'] }).notNull().default('manual'),
+  createdBy: text('created_by').references(() => users.id, { onDelete: 'set null' }),
+  createdAt: text('created_at').notNull().$defaultFn(() => new Date().toISOString()),
+}, (table) => ({
+  versionIdx: uniqueIndex('content_versions_item_version_idx').on(table.contentItemId, table.versionNumber),
+}))
+
 export const contentVariants = sqliteTable('content_variants', {
   id: text('id').primaryKey(),
   contentItemId: text('content_item_id').notNull().references(() => contentItems.id, { onDelete: 'cascade' }),
@@ -203,6 +216,13 @@ export const contentRelations = relations(contentItems, ({ one, many }) => ({
   workspace: one(workspaces, { fields: [contentItems.workspaceId], references: [workspaces.id] }),
   variants: many(contentVariants),
   mediaAssets: many(mediaAssets),
+  versions: many(contentVersions),
+}))
+
+
+export const contentVersionRelations = relations(contentVersions, ({ one }) => ({
+  contentItem: one(contentItems, { fields: [contentVersions.contentItemId], references: [contentItems.id] }),
+  user: one(users, { fields: [contentVersions.createdBy], references: [users.id] }),
 }))
 
 export const variantRelations = relations(contentVariants, ({ one, many }) => ({
@@ -233,4 +253,5 @@ export const publishAttemptRelations = relations(publishAttempts, ({ one }) => (
 export type Workspace = typeof workspaces.$inferSelect
 export type ContentItem = typeof contentItems.$inferSelect
 export type ContentVariant = typeof contentVariants.$inferSelect
+export type ContentVersion = typeof contentVersions.$inferSelect
 export type Job = typeof jobs.$inferSelect
