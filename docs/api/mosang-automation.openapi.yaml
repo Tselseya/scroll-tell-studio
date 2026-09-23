@@ -1,0 +1,306 @@
+openapi: 3.1.0
+info:
+  title: M.O.S.A.N.G. Automation API
+  version: 1.0.0
+  description: >-
+    Automation API for Multimodal Omnichannel Studio for AI Native Generation.
+    Designed for n8n, scripts, and other workflow tools. Generation requests are
+    asynchronous and return queued jobs.
+servers:
+  - url: https://YOUR_MOSANG_API_HOST
+  - url: http://127.0.0.1:8787
+security:
+  - bearerAuth: []
+tags:
+  - name: Automation
+  - name: Content
+  - name: Generation
+  - name: Jobs
+  - name: Publishing
+paths:
+  /api/v1/health:
+    get:
+      tags: [Automation]
+      summary: Verify API-key access
+      responses:
+        '200':
+          description: API is available
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Health' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /api/v1/content:
+    get:
+      tags: [Content]
+      summary: List content items
+      parameters:
+        - { $ref: '#/components/parameters/Status' }
+        - { $ref: '#/components/parameters/Limit' }
+      responses:
+        '200':
+          description: Content items
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items: { type: array, items: { $ref: '#/components/schemas/ContentItem' } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+    post:
+      tags: [Content]
+      summary: Create a draft
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateContentRequest' }
+      responses:
+        '201':
+          description: Draft created
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [item]
+                properties:
+                  item: { $ref: '#/components/schemas/ContentItem' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /api/v1/content/{contentId}/variants:
+    post:
+      tags: [Content]
+      summary: Create a platform-specific content variant
+      parameters:
+        - { $ref: '#/components/parameters/ContentId' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/VariantRequest' }
+      responses:
+        '201':
+          description: Variant created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  variant: { $ref: '#/components/schemas/ContentVariant' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/v1/generation/images:
+    post:
+      tags: [Generation]
+      summary: Queue image generation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ImageGenerationRequest' }
+      responses:
+        '202': { $ref: '#/components/responses/QueuedJob' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /api/v1/generation/videos:
+    post:
+      tags: [Generation]
+      summary: Queue video generation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/VideoGenerationRequest' }
+      responses:
+        '202': { $ref: '#/components/responses/QueuedJob' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /api/v1/generation/voice:
+    post:
+      tags: [Generation]
+      summary: Queue voice generation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/VoiceGenerationRequest' }
+      responses:
+        '202': { $ref: '#/components/responses/QueuedJob' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /api/v1/jobs:
+    get:
+      tags: [Jobs]
+      summary: List recent jobs
+      parameters:
+        - { $ref: '#/components/parameters/Limit' }
+      responses:
+        '200':
+          description: Jobs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  jobs: { type: array, items: { $ref: '#/components/schemas/Job' } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /api/v1/jobs/{jobId}:
+    get:
+      tags: [Jobs]
+      summary: Get a job status
+      parameters:
+        - { $ref: '#/components/parameters/JobId' }
+      responses:
+        '200':
+          description: Job status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  job: { $ref: '#/components/schemas/Job' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/v1/publish/queue:
+    post:
+      tags: [Publishing]
+      summary: Queue a future publishing attempt
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PublishQueueRequest' }
+      responses:
+        '202': { $ref: '#/components/responses/QueuedJob' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: MOSANG_N8N_API_KEY
+  parameters:
+    ContentId: { name: contentId, in: path, required: true, schema: { type: string } }
+    JobId: { name: jobId, in: path, required: true, schema: { type: string } }
+    Limit: { name: limit, in: query, required: false, schema: { type: integer, minimum: 1, maximum: 100, default: 50 } }
+    Status: { name: status, in: query, required: false, schema: { type: string, enum: [idea, draft, ready, scheduled, published, archived] } }
+  schemas:
+    Health:
+      type: object
+      required: [ok, service, version]
+      properties:
+        ok: { type: boolean }
+        service: { type: string, example: mosang-automation-api }
+        version: { type: string, example: v1 }
+    ContentItem:
+      type: object
+      properties:
+        id: { type: string }
+        workspaceId: { type: string }
+        title: { type: string }
+        description: { type: string, nullable: true }
+        contentType: { type: string, enum: [text, image, carousel, short_video, long_video] }
+        status: { type: string, enum: [idea, draft, ready, scheduled, published, archived] }
+        updatedAt: { type: string, format: date-time }
+    CreateContentRequest:
+      type: object
+      required: [title]
+      properties:
+        workspaceId: { type: string, default: personal }
+        title: { type: string, minLength: 1, maxLength: 160 }
+        description: { type: string }
+        contentType: { type: string, enum: [text, image, carousel, short_video, long_video], default: text }
+        status: { type: string, enum: [idea, draft, ready, scheduled, published, archived], default: draft }
+        sourcePrompt: { type: string }
+    VariantRequest:
+      type: object
+      required: [destination, body]
+      properties:
+        destination: { type: string, enum: [facebook, instagram, threads, youtube, tiktok, x] }
+        body: { type: string }
+        title: { type: string }
+        metadata: { type: object, additionalProperties: true }
+    ImageGenerationRequest:
+      type: object
+      required: [provider, prompt]
+      properties:
+        workspaceId: { type: string, default: personal }
+        provider: { type: string, example: google-imagen }
+        model: { type: string }
+        prompt: { type: string, maxLength: 30000 }
+        aspectRatio: { type: string, example: '1:1' }
+        contentItemId: { type: string }
+        inputAssetIds: { type: array, items: { type: string } }
+        idempotencyKey: { type: string }
+    VideoGenerationRequest:
+      allOf:
+        - $ref: '#/components/schemas/ImageGenerationRequest'
+        - type: object
+          properties:
+            durationSeconds: { type: integer, minimum: 1, maximum: 120 }
+    VoiceGenerationRequest:
+      type: object
+      required: [provider, prompt]
+      properties:
+        workspaceId: { type: string, default: personal }
+        provider: { type: string, example: elevenlabs }
+        model: { type: string }
+        prompt: { type: string, description: Text to synthesize or a voice instruction }
+        voiceId: { type: string }
+        contentItemId: { type: string }
+        idempotencyKey: { type: string }
+    PublishQueueRequest:
+      type: object
+      required: [contentVariantId, connectedAccountId]
+      properties:
+        workspaceId: { type: string, default: personal }
+        contentVariantId: { type: string }
+        connectedAccountId: { type: string }
+        runAt: { type: string, format: date-time }
+        idempotencyKey: { type: string }
+    ContentVariant:
+      type: object
+      properties:
+        id: { type: string }
+        contentItemId: { type: string }
+        destination: { type: string }
+        body: { type: string }
+        title: { type: string, nullable: true }
+    Job:
+      type: object
+      properties:
+        id: { type: string }
+        workspaceId: { type: string }
+        type: { type: string, enum: [ai_generation, media_process, publish, sync] }
+        status: { type: string, enum: [queued, running, succeeded, failed, retrying, cancelled] }
+        payload: { type: object, additionalProperties: true }
+        result: { type: object, nullable: true, additionalProperties: true }
+        error: { type: string, nullable: true }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+  responses:
+    Unauthorized:
+      description: Missing or invalid bearer key
+      content:
+        application/json:
+          schema: { type: object, properties: { error: { type: string } } }
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema: { type: object, properties: { error: { type: string }, details: { type: object } } }
+    NotFound:
+      description: Resource not found
+    QueuedJob:
+      description: Job queued
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [job]
+            properties:
+              job: { $ref: '#/components/schemas/Job' }
+              message: { type: string }

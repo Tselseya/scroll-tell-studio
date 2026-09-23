@@ -71,6 +71,8 @@ The provider key is never sent to the browser. Without `AI_API_KEY`, the editor 
 
 See [`docs/EDITOR-WORKFLOW.md`](./docs/EDITOR-WORKFLOW.md) for rich-media uploads, content-library workflow, version history, platform previews, direct Claude configuration, and Manus MCP setup.
 
+See [`docs/N8N-INTEGRATION.md`](./docs/N8N-INTEGRATION.md) for the M.O.S.A.N.G. automation API, n8n credential setup, generation-job workflow, and OpenAPI contract.
+
 ## Verify and build
 
 ```bash

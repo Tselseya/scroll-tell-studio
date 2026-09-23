@@ -1,4 +1,4 @@
-import { createHash, randomBytes, randomUUID } from 'node:crypto'
+import { createHash, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto'
 import type { FastifyReply, FastifyRequest } from 'fastify'
 import { and, eq } from 'drizzle-orm'
 import { db } from '@mosang/db'
@@ -139,6 +139,25 @@ export async function requireAuth(request: FastifyRequest, reply: FastifyReply) 
     return null
   }
   return context
+}
+
+function safeSecretEqual(left: string, right: string) {
+  const leftBuffer = Buffer.from(left)
+  const rightBuffer = Buffer.from(right)
+  return leftBuffer.length === rightBuffer.length && timingSafeEqual(leftBuffer, rightBuffer)
+}
+
+export async function requireAutomationApiKey(request: FastifyRequest, reply: FastifyReply) {
+  const configured = process.env.MOSANG_N8N_API_KEY
+  const authorization = request.headers.authorization
+  const provided = authorization?.startsWith('Bearer ') ? authorization.slice(7).trim() : undefined
+
+  if (!configured || !provided || !safeSecretEqual(provided, configured)) {
+    await reply.code(401).send({ error: 'Valid M.O.S.A.N.G. automation API key required' })
+    return false
+  }
+
+  return true
 }
 
 export function clearSession(reply: FastifyReply) {

@@ -13,7 +13,7 @@ import { db } from '@mosang/db'
 import { connectedAccounts, consentRecords, contentItems, contentVariants, contentVersions, destinations, jobs, mediaAssets, organizationMembers, organizations, workspaces } from '@mosang/db/schema'
 import { and, desc, eq } from 'drizzle-orm'
 import { z } from 'zod'
-import { beginOAuth, clearSession, completeOAuth, getAuthContext, getProviderConfig, requireAuth } from './auth.js'
+import { beginOAuth, clearSession, completeOAuth, getAuthContext, getProviderConfig, requireAuth, requireAutomationApiKey } from './auth.js'
 import { createMcpServer } from './mcp.js'
 
 const port = Number(process.env.PORT ?? 8787)
@@ -274,6 +274,100 @@ app.post('/api/jobs/publish', async (request, reply) => {
   const id = randomUUID(); await db.insert(jobs).values({ id, workspaceId: scope.workspace.id, type: 'publish', status: 'queued', runAt: parsed.data.runAt, payload: { contentVariantId: variant.id, connectedAccountId: account.id } })
   const [job] = await db.select().from(jobs).where(eq(jobs.id, id)).limit(1)
   return reply.code(202).send({ job, message: 'Queued locally. The publishing adapter will execute this job later.' })
+})
+
+const automationContentPayload = contentPayload.extend({ workspaceId: z.string().default('personal') })
+const generationPayload = z.object({
+  workspaceId: z.string().default('personal'),
+  provider: z.string().min(1).max(80),
+  prompt: z.string().min(1).max(30000),
+  model: z.string().max(120).optional(),
+  contentItemId: z.string().optional(),
+  aspectRatio: z.string().max(30).optional(),
+  durationSeconds: z.number().int().min(1).max(120).optional(),
+  voiceId: z.string().max(160).optional(),
+  inputAssetIds: z.array(z.string()).max(20).optional(),
+  idempotencyKey: z.string().max(200).optional(),
+})
+
+app.get('/api/v1/health', async (request, reply) => {
+  if (!await requireAutomationApiKey(request, reply)) return
+  return { ok: true, service: 'mosang-automation-api', version: 'v1' }
+})
+
+app.get('/api/v1/content', async (request, reply) => {
+  if (!await requireAutomationApiKey(request, reply)) return
+  const query = request.query as { status?: string; limit?: string }
+  const limit = Math.min(Math.max(Number(query.limit ?? 50), 1), 100)
+  const condition = query.status ? eq(contentItems.status, query.status as typeof contentItems.$inferSelect.status) : undefined
+  return { items: await db.select().from(contentItems).where(condition).orderBy(desc(contentItems.updatedAt)).limit(limit) }
+})
+
+app.post('/api/v1/content', async (request, reply) => {
+  if (!await requireAutomationApiKey(request, reply)) return
+  const parsed = automationContentPayload.safeParse(request.body)
+  if (!parsed.success) return reply.code(400).send({ error: 'Invalid content payload', details: parsed.error.flatten() })
+  const id = randomUUID()
+  await db.insert(contentItems).values({ id, ...parsed.data })
+  await db.insert(contentVersions).values({ id: randomUUID(), contentItemId: id, versionNumber: 1, title: parsed.data.title, body: parsed.data.description ?? '', source: 'manual' })
+  const [item] = await db.select().from(contentItems).where(eq(contentItems.id, id)).limit(1)
+  return reply.code(201).send({ item })
+})
+
+app.post('/api/v1/content/:id/variants', async (request, reply) => {
+  if (!await requireAutomationApiKey(request, reply)) return
+  const { id: contentItemId } = request.params as { id: string }
+  const [owned] = await db.select({ id: contentItems.id }).from(contentItems).where(eq(contentItems.id, contentItemId)).limit(1)
+  if (!owned) return reply.code(404).send({ error: 'Content item not found' })
+  const parsed = z.object({ destination: z.enum(['facebook', 'instagram', 'threads', 'youtube', 'tiktok', 'x']), body: z.string().min(1), title: z.string().optional(), metadata: jsonBody.optional() }).safeParse(request.body)
+  if (!parsed.success) return reply.code(400).send({ error: 'Invalid variant payload', details: parsed.error.flatten() })
+  const id = randomUUID()
+  await db.insert(contentVariants).values({ id, contentItemId, ...parsed.data })
+  const [variant] = await db.select().from(contentVariants).where(eq(contentVariants.id, id)).limit(1)
+  return reply.code(201).send({ variant })
+})
+
+async function queueGeneration(request: Parameters<typeof requireAutomationApiKey>[0], reply: Parameters<typeof requireAutomationApiKey>[1], kind: 'image_generation' | 'video_generation' | 'voice_generation') {
+  if (!await requireAutomationApiKey(request, reply)) return
+  const parsed = generationPayload.safeParse(request.body)
+  if (!parsed.success) return reply.code(400).send({ error: 'Invalid generation payload', details: parsed.error.flatten() })
+  const id = randomUUID()
+  const scope = parsed.data.workspaceId === 'personal' ? 'personal' : parsed.data.workspaceId
+  const [workspace] = await db.select().from(workspaces).where(eq(workspaces.id, scope)).limit(1)
+  if (!workspace) return reply.code(404).send({ error: 'Workspace not found' })
+  await db.insert(jobs).values({ id, workspaceId: workspace.id, type: 'ai_generation', status: 'queued', payload: { kind, ...parsed.data }, runAt: new Date().toISOString() })
+  const [job] = await db.select().from(jobs).where(eq(jobs.id, id)).limit(1)
+  return reply.code(202).send({ job, message: 'Generation queued. Provider workers will execute this job when configured.' })
+}
+
+app.post('/api/v1/generation/images', async (request, reply) => queueGeneration(request, reply, 'image_generation'))
+app.post('/api/v1/generation/videos', async (request, reply) => queueGeneration(request, reply, 'video_generation'))
+app.post('/api/v1/generation/voice', async (request, reply) => queueGeneration(request, reply, 'voice_generation'))
+
+app.get('/api/v1/jobs/:id', async (request, reply) => {
+  if (!await requireAutomationApiKey(request, reply)) return
+  const { id } = request.params as { id: string }
+  const [job] = await db.select().from(jobs).where(eq(jobs.id, id)).limit(1)
+  if (!job) return reply.code(404).send({ error: 'Job not found' })
+  return { job }
+})
+
+app.get('/api/v1/jobs', async (request, reply) => {
+  if (!await requireAutomationApiKey(request, reply)) return
+  const limit = Math.min(Math.max(Number((request.query as { limit?: string }).limit ?? 50), 1), 100)
+  return { jobs: await db.select().from(jobs).orderBy(desc(jobs.createdAt)).limit(limit) }
+})
+
+app.post('/api/v1/publish/queue', async (request, reply) => {
+  if (!await requireAutomationApiKey(request, reply)) return
+  const parsed = z.object({ workspaceId: z.string().default('personal'), contentVariantId: z.string().min(1), connectedAccountId: z.string().min(1), runAt: z.string().datetime().optional(), idempotencyKey: z.string().max(200).optional() }).safeParse(request.body)
+  if (!parsed.success) return reply.code(400).send({ error: 'Invalid publish payload', details: parsed.error.flatten() })
+  const [workspace] = await db.select().from(workspaces).where(eq(workspaces.id, parsed.data.workspaceId)).limit(1)
+  if (!workspace) return reply.code(404).send({ error: 'Workspace not found' })
+  const id = randomUUID()
+  await db.insert(jobs).values({ id, workspaceId: workspace.id, type: 'publish', status: 'queued', runAt: parsed.data.runAt, payload: { contentVariantId: parsed.data.contentVariantId, connectedAccountId: parsed.data.connectedAccountId, idempotencyKey: parsed.data.idempotencyKey } })
+  const [job] = await db.select().from(jobs).where(eq(jobs.id, id)).limit(1)
+  return reply.code(202).send({ job, message: 'Publish queued. No external post is made until a publishing adapter is configured.' })
 })
 
 app.post('/mcp', async (request, reply) => {
