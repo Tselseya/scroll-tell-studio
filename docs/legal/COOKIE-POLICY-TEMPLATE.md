@@ -3,13 +3,13 @@
 **Template status:** Draft for legal review. Replace bracketed placeholders and update this policy whenever a script, SDK, cookie, pixel, local-storage key, or third-party embed is added.
 
 **Effective date:** [DATE]  
-**Service:** ScrollTell Studio  
+**Service:** M.O.S.A.N.G.  
 **Operator:** [LEGAL ENTITY NAME]  
 **Contact:** [PRIVACY EMAIL]
 
 ## 1. Current implementation
 
-The current ScrollTell Studio build does not include advertising trackers, analytics SDKs, social pixels, or third-party embeds. The local development dashboard uses ordinary browser application state and a local API. The hosted production service must maintain an inventory before launch.
+The current M.O.S.A.N.G. build does not include advertising trackers, analytics SDKs, social pixels, or third-party embeds. The local development dashboard uses ordinary browser application state and a local API. The hosted production service must maintain an inventory before launch.
 
 ## 2. What cookies and similar technologies are
 

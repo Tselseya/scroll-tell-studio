@@ -1,6 +1,6 @@
 # MCP Connections for Claude and Manus
 
-ScrollTell exposes the Model Context Protocol at `POST /mcp`. The server is currently stateless Streamable HTTP. It also supports local stdio. The tools can list content, read a content item, create and update drafts, preview destination variants, queue a publish job, and list jobs.
+M.O.S.A.N.G. exposes the Model Context Protocol at `POST /mcp`. The server is currently stateless Streamable HTTP. It also supports local stdio. The tools can list content, read a content item, create and update drafts, preview destination variants, queue a publish job, and list jobs.
 
 ## Important security distinction
 
@@ -19,7 +19,7 @@ In production, the server returns `503` if `MCP_AUTH_TOKEN` is missing and `401`
 From the repository root:
 
 ```bash
-claude mcp add --transport stdio scrolltell -- pnpm --dir /absolute/path/to/scroll-tell-studio server:start
+claude mcp add --transport stdio mosang -- pnpm --dir /absolute/path/to/mosang server:start
 ```
 
 Or add a project `.mcp.json` entry:
@@ -27,10 +27,10 @@ Or add a project `.mcp.json` entry:
 ```json
 {
   "mcpServers": {
-    "scrolltell": {
+    "mosang": {
       "type": "stdio",
       "command": "pnpm",
-      "args": ["--dir", "/absolute/path/to/scroll-tell-studio", "server:start"],
+      "args": ["--dir", "/absolute/path/to/mosang", "server:start"],
       "env": { "MCP_TRANSPORT": "stdio" }
     }
   }
@@ -46,7 +46,7 @@ Once the API is deployed at `https://YOUR_API_DOMAIN`, configure the remote serv
 ```bash
 claude mcp add --transport http \
   --header "Authorization: Bearer YOUR_MCP_AUTH_TOKEN" \
-  scrolltell https://YOUR_API_DOMAIN/mcp
+  mosang https://YOUR_API_DOMAIN/mcp
 ```
 
 The exact option syntax can vary by Claude Code version; the important values are transport `http`/`streamable-http`, the HTTPS `/mcp` URL, and the Authorization header. Run `/mcp` and test `list_content`.
@@ -57,7 +57,7 @@ Anthropic’s MCP connector API uses a server definition like:
 {
   "type": "url",
   "url": "https://YOUR_API_DOMAIN/mcp",
-  "name": "scrolltell",
+  "name": "mosang",
   "authorization_token": "YOUR_MCP_AUTH_TOKEN"
 }
 ```
@@ -73,7 +73,7 @@ In Manus, open the Integrations or Connectors area and choose the option to crea
 - Authentication: Bearer token
 - Token: the value of `MCP_AUTH_TOKEN`
 
-Save the connector, complete any authentication prompt, and test with a read-only request such as “list recent ScrollTell drafts.” Manus documentation describes custom MCP servers as the route for internal tools and specialized databases. The exact UI labels may change, so use the connector’s custom MCP option rather than a prebuilt app connector.
+Save the connector, complete any authentication prompt, and test with a read-only request such as “list recent M.O.S.A.N.G. drafts.” Manus documentation describes custom MCP servers as the route for internal tools and specialized databases. The exact UI labels may change, so use the connector’s custom MCP option rather than a prebuilt app connector.
 
 Do not paste the token into a public prompt or commit it to the repository. Remove and rotate it immediately if exposed.
 

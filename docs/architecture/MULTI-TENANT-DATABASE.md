@@ -1,4 +1,4 @@
-# ScrollTell Studio Multi-Tenant Database Architecture
+# M.O.S.A.N.G. Multi-Tenant Database Architecture
 
 ## Scope and status
 

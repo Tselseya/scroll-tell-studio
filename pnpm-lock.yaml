@@ -29,7 +29,7 @@ importers:
       '@modelcontextprotocol/sdk':
         specifier: ^1.5.0
         version: 1.30.0(supports-color@8.1.1)(zod@3.25.76)
-      '@scrolltell/db':
+      '@mosang/db':
         specifier: workspace:*
         version: link:../../packages/db
       drizzle-orm:
@@ -54,7 +54,7 @@ importers:
 
   apps/web:
     dependencies:
-      '@scrolltell/db':
+      '@mosang/db':
         specifier: workspace:*
         version: link:../../packages/db
       lucide-react:

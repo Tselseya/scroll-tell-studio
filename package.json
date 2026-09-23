@@ -1,21 +1,21 @@
 {
-  "name": "scroll-tell-studio",
+  "name": "mosang",
   "version": "0.1.0",
   "private": true,
   "description": "A lightweight local-first content workspace for AI-assisted publishing.",
   "type": "module",
   "packageManager": "pnpm@11.24.0",
   "scripts": {
-    "dev": "pnpm --filter @scrolltell/web dev",
+    "dev": "pnpm --filter @mosang/web dev",
     "dev:all": "concurrently -n web,server -c blue,green \"pnpm dev\" \"pnpm server:dev\"",
-    "server:dev": "pnpm --filter @scrolltell/server dev",
-    "server:start": "pnpm --filter @scrolltell/server start",
+    "server:dev": "pnpm --filter @mosang/server dev",
+    "server:start": "pnpm --filter @mosang/server start",
     "server:prod": "pnpm db:migrate && pnpm server:start",
-    "build": "pnpm --filter @scrolltell/web build",
-    "typecheck": "pnpm --filter @scrolltell/db typecheck && pnpm --filter @scrolltell/server typecheck && pnpm --filter @scrolltell/web typecheck",
-    "db:generate": "pnpm --filter @scrolltell/db db:generate",
-    "db:migrate": "pnpm --filter @scrolltell/db db:migrate",
-    "db:studio": "pnpm --filter @scrolltell/db db:studio"
+    "build": "pnpm --filter @mosang/web build",
+    "typecheck": "pnpm --filter @mosang/db typecheck && pnpm --filter @mosang/server typecheck && pnpm --filter @mosang/web typecheck",
+    "db:generate": "pnpm --filter @mosang/db db:generate",
+    "db:migrate": "pnpm --filter @mosang/db db:migrate",
+    "db:studio": "pnpm --filter @mosang/db db:studio"
   },
   "devDependencies": {
     "concurrently": "^9.1.2",

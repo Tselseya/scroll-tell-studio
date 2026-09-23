@@ -1,6 +1,8 @@
-# ScrollTell Studio
+# M.O.S.A.N.G.
 
-ScrollTell Studio is a lightweight, local-first content workspace for drafting, transforming, organizing, and publishing content with AI assistance. It is designed for modest hardware and delegates heavy model work to connected providers such as OpenAI, Claude, and Manus while keeping the workspace local.
+**Multimodal Omnichannel Studio for AI Native Generation**
+
+M.O.S.A.N.G. is a lightweight, local-first content workspace for drafting, transforming, organizing, and publishing content with AI assistance. It is designed for modest hardware and delegates heavy model work to connected providers such as OpenAI, Claude, and Manus while keeping the workspace local.
 
 ## Current foundation
 
@@ -38,7 +40,7 @@ pnpm db:migrate
 pnpm dev:all
 ```
 
-Then open <http://localhost:5173>. You will see the ScrollTell sign-in screen. Configure at least one OAuth provider before signing in:
+Then open <http://localhost:5173>. You will see the M.O.S.A.N.G. sign-in screen. Configure at least one OAuth provider before signing in:
 
 ```bash
 export APP_URL=http://127.0.0.1:8787
@@ -49,7 +51,7 @@ export GITHUB_CLIENT_SECRET=your-client-secret
 
 For GitHub OAuth, use `http://127.0.0.1:8787/auth/github/callback` as the callback URL. Google uses `http://127.0.0.1:8787/auth/google/callback`. OAuth secrets belong only in the server environment and must never be committed.
 
-The previous GitHub Pages URL displayed the README because the repository did not have a Pages build workflow and GitHub Pages was serving the repository root. A workflow is now included at `.github/workflows/pages.yml`; after it runs, the static dashboard will be available at <https://tselseya.github.io/scroll-tell-studio/>. GitHub Pages can host the visual frontend, but it cannot run the Node.js API, SQLite database, OAuth secrets, or publishing workers. For sign-in and real data, set `VITE_API_URL` to a separately hosted HTTPS API and configure that API's OAuth callback URLs accordingly.
+The previous GitHub Pages URL displayed the README because the repository did not have a Pages build workflow and GitHub Pages was serving the repository root. A workflow is now included at `.github/workflows/pages.yml`; after it runs, the static dashboard will be available at <https://tselseya.github.io/mosang/>. GitHub Pages can host the visual frontend, but it cannot run the Node.js API, SQLite database, OAuth secrets, or publishing workers. For sign-in and real data, set `VITE_API_URL` to a separately hosted HTTPS API and configure that API's OAuth callback URLs accordingly.
 
 Without a running API, the Pages dashboard is only a static shell and cannot authenticate or save content. For a fully working personal instance, use the local URL first.
 
@@ -101,9 +103,9 @@ For Claude Desktop or another stdio-compatible MCP client, point the command at 
 ```json
 {
   "mcpServers": {
-    "scrolltell": {
+    "mosang": {
       "command": "pnpm",
-      "args": ["--dir", "/absolute/path/to/scroll-tell-studio", "server:start"],
+      "args": ["--dir", "/absolute/path/to/mosang", "server:start"],
       "env": { "MCP_TRANSPORT": "stdio" }
     }
   }

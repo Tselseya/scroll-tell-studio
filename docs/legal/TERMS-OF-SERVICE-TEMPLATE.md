@@ -9,7 +9,7 @@
 
 ## 1. Agreement
 
-These Terms govern access to ScrollTell Studio. By creating an account or using the service, you agree to these Terms and the Privacy Policy. If you use the service for an organization, you represent that you have authority to bind that organization.
+These Terms govern access to M.O.S.A.N.G.. By creating an account or using the service, you agree to these Terms and the Privacy Policy. If you use the service for an organization, you represent that you have authority to bind that organization.
 
 ## 2. Eligibility and accounts
 
@@ -17,7 +17,7 @@ You must provide accurate account information, protect your credentials, and pro
 
 ## 3. The service
 
-ScrollTell provides tools for drafting, organizing, transforming, reviewing, and publishing content. Features may depend on third-party APIs, platform approvals, provider availability, rate limits, and changing policies. We do not guarantee that any third-party platform will approve, accept, display, or preserve content.
+M.O.S.A.N.G. provides tools for drafting, organizing, transforming, reviewing, and publishing content. Features may depend on third-party APIs, platform approvals, provider availability, rate limits, and changing policies. We do not guarantee that any third-party platform will approve, accept, display, or preserve content.
 
 ## 4. Connected accounts and authorization
 

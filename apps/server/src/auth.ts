@@ -1,11 +1,11 @@
 import { createHash, randomBytes, randomUUID } from 'node:crypto'
 import type { FastifyReply, FastifyRequest } from 'fastify'
 import { and, eq } from 'drizzle-orm'
-import { db } from '@scrolltell/db'
-import { organizationMembers, organizations, oauthAccounts, sessions, users, workspaces } from '@scrolltell/db/schema'
+import { db } from '@mosang/db'
+import { organizationMembers, organizations, oauthAccounts, sessions, users, workspaces } from '@mosang/db/schema'
 
-const SESSION_COOKIE = 'scrolltell_session'
-const STATE_COOKIE = 'scrolltell_oauth_state'
+const SESSION_COOKIE = 'mosang_session'
+const STATE_COOKIE = 'mosang_oauth_state'
 const sessionTtlMs = 1000 * 60 * 60 * 24 * 30
 const isProduction = process.env.NODE_ENV === 'production'
 const appUrl = process.env.APP_URL ?? `http://127.0.0.1:${process.env.PORT ?? 8787}`

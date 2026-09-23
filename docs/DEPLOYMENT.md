@@ -16,7 +16,7 @@ For this project, Railway is the quickest personal beta path. For public SaaS, m
 
 ## Railway deployment
 
-1. Create a Railway project and deploy the GitHub repository `Tselseya/scroll-tell-studio`.
+1. Create a Railway project and deploy the GitHub repository `Tselseya/mosang`.
 2. Configure the service root as the repository root.
 3. Railway should use `railway.json`. If entering commands manually, use:
    - Build: `corepack enable && pnpm install --frozen-lockfile`
@@ -25,7 +25,7 @@ For this project, Railway is the quickest personal beta path. For public SaaS, m
 4. Add a Railway Volume and mount it at `/app/data`. Railway documents that relative `./data` writes persist only when the volume is mounted at the corresponding absolute application path.
 5. Set `DATABASE_URL=/app/data/scrolltell.db`.
 6. Set `NODE_ENV=production` and `HOST=0.0.0.0`.
-7. Generate a public HTTPS domain, for example `https://scrolltell-api-production.up.railway.app`.
+7. Generate a public HTTPS domain, for example `https://mosang-api-production.up.railway.app`.
 8. Set `APP_URL` to that exact API origin and `WEB_APP_URL` to the frontend origin.
 9. Add the GitHub and/or Google client IDs and secrets. OAuth callback URLs must be:
    - `https://YOUR_API_DOMAIN/auth/github/callback`

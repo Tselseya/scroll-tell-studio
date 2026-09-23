@@ -9,8 +9,8 @@ import multipart from '@fastify/multipart'
 import cookie from '@fastify/cookie'
 import Fastify from 'fastify'
 import OpenAI from 'openai'
-import { db } from '@scrolltell/db'
-import { connectedAccounts, consentRecords, contentItems, contentVariants, contentVersions, destinations, jobs, mediaAssets, organizationMembers, organizations, workspaces } from '@scrolltell/db/schema'
+import { db } from '@mosang/db'
+import { connectedAccounts, consentRecords, contentItems, contentVariants, contentVersions, destinations, jobs, mediaAssets, organizationMembers, organizations, workspaces } from '@mosang/db/schema'
 import { and, desc, eq } from 'drizzle-orm'
 import { z } from 'zod'
 import { beginOAuth, clearSession, completeOAuth, getAuthContext, getProviderConfig, requireAuth } from './auth.js'
@@ -56,7 +56,7 @@ async function getWorkspace(request: Parameters<typeof getAuthContext>[0], works
   return workspace ? { auth, workspace } : null
 }
 
-app.get('/health', async () => ({ ok: true, service: 'scrolltell-server', timestamp: new Date().toISOString() }))
+app.get('/health', async () => ({ ok: true, service: 'mosang-server', timestamp: new Date().toISOString() }))
 
 app.get('/auth/providers', async () => ({ github: !!getProviderConfig('github'), google: !!getProviderConfig('google') }))
 app.get('/auth/:provider', async (request, reply) => {
@@ -163,7 +163,7 @@ app.post('/api/ai/chat', async (request, reply) => {
   const auth = await requireAuth(request, reply); if (!auth) return
   const parsed = aiPayload.safeParse(request.body)
   if (!parsed.success) return reply.code(400).send({ error: 'Invalid AI request', details: parsed.error.flatten() })
-  if (parsed.data.provider === 'manus') return reply.code(501).send({ error: 'Manus is an MCP/agent integration, not a synchronous model provider. Connect ScrollTell as a custom MCP server in Manus, then ask Manus to edit drafts.' })
+  if (parsed.data.provider === 'manus') return reply.code(501).send({ error: 'Manus is an MCP/agent integration, not a synchronous model provider. Connect M.O.S.A.N.G. as a custom MCP server in Manus, then ask Manus to edit drafts.' })
   const apiKey = parsed.data.provider === 'claude' ? process.env.CLAUDE_API_KEY : process.env.AI_API_KEY
   if (!apiKey) return reply.code(503).send({ error: `${parsed.data.provider} provider is not configured on the server.` })
   const client = new OpenAI({ apiKey, baseURL: parsed.data.provider === 'claude' ? (process.env.CLAUDE_BASE_URL || 'https://api.anthropic.com/v1') : (process.env.AI_BASE_URL || undefined) })
@@ -179,7 +179,7 @@ app.post('/api/ai/chat', async (request, reply) => {
     const response = await client.chat.completions.create({
       model: process.env.AI_MODEL || 'gpt-5-mini',
       messages: [
-        { role: 'system', content: `You are ScrollTell Studio's editorial copilot. ${actionInstructions} Do not claim to have published anything.${draftContext}` },
+        { role: 'system', content: `You are M.O.S.A.N.G.'s editorial copilot. ${actionInstructions} Do not claim to have published anything.${draftContext}` },
         ...parsed.data.messages,
       ],
       max_completion_tokens: 1600,
@@ -286,4 +286,4 @@ app.get('/mcp', async (_request, reply) => reply.code(405).send({ error: 'Use PO
 app.delete('/mcp', async (_request, reply) => reply.code(405).send({ error: 'Stateless MCP sessions do not support DELETE.' }))
 
 async function runStdio() { const server = createMcpServer(); await server.connect(new StdioServerTransport()) }
-if (process.env.MCP_TRANSPORT === 'stdio') await runStdio(); else { await app.listen({ port, host }); app.log.info(`ScrollTell server listening on http://${host}:${port}`) }
+if (process.env.MCP_TRANSPORT === 'stdio') await runStdio(); else { await app.listen({ port, host }); app.log.info(`M.O.S.A.N.G. server listening on http://${host}:${port}`) }

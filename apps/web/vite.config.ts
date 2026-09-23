@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
-  base: process.env.GITHUB_ACTIONS ? '/scroll-tell-studio/' : '/',
+  base: process.env.GITHUB_ACTIONS ? '/mosang/' : '/',
   plugins: [react(), tailwindcss()],
   server: {
     port: 5173,

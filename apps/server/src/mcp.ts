@@ -1,8 +1,8 @@
 import { randomUUID } from 'node:crypto'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
-import { db } from '@scrolltell/db'
-import { contentItems, contentVariants, jobs } from '@scrolltell/db/schema'
+import { db } from '@mosang/db'
+import { contentItems, contentVariants, jobs } from '@mosang/db/schema'
 import { desc, eq } from 'drizzle-orm'
 
 const destinations = ['facebook', 'instagram', 'threads', 'youtube', 'tiktok', 'x'] as const
@@ -11,7 +11,7 @@ const contentTypes = ['text', 'image', 'carousel', 'short_video', 'long_video'] 
 const textResult = (value: unknown) => ({ content: [{ type: 'text' as const, text: JSON.stringify(value, null, 2) }] })
 
 export function createMcpServer() {
-  const server = new McpServer({ name: 'scrolltell-local-workspace', version: '0.1.0' })
+  const server = new McpServer({ name: 'mosang-local-workspace', version: '0.1.0' })
 
   server.tool(
     'list_content',

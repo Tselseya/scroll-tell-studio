@@ -11,11 +11,11 @@
 
 ## 1. Who we are
 
-[LEGAL ENTITY NAME] operates ScrollTell Studio, a hosted content-workspace service that helps users draft, organize, transform, review, and publish content through connected AI providers and social-media platforms. For personal data processed to provide the service, [LEGAL ENTITY NAME] acts as the personal information controller under the Philippine Data Privacy Act of 2012 and, where the General Data Protection Regulation applies, as the controller or processor identified in the applicable service relationship.
+[LEGAL ENTITY NAME] operates M.O.S.A.N.G., a hosted content-workspace service that helps users draft, organize, transform, review, and publish content through connected AI providers and social-media platforms. For personal data processed to provide the service, [LEGAL ENTITY NAME] acts as the personal information controller under the Philippine Data Privacy Act of 2012 and, where the General Data Protection Regulation applies, as the controller or processor identified in the applicable service relationship.
 
 ## 2. Scope
 
-This Policy applies to the ScrollTell website, application, support channels, and related services. It covers information about account holders, organization members, visitors, applicants, support contacts, and people whose information users place into the service. Users must not upload personal data unless they have a lawful basis and the authority to do so.
+This Policy applies to the M.O.S.A.N.G. website, application, support channels, and related services. It covers information about account holders, organization members, visitors, applicants, support contacts, and people whose information users place into the service. Users must not upload personal data unless they have a lawful basis and the authority to do so.
 
 ## 3. Information we collect
 
@@ -39,7 +39,7 @@ Connected platform APIs and authorization flows are controlled by the relevant p
 
 ## 7. International transfers
 
-Because ScrollTell is a global service, information may be processed outside the Philippines and outside the country where the user lives. Before launch, we will document the countries, processors, transfer mechanisms, contractual safeguards, and supplementary security measures. For GDPR-covered transfers, we will use an adequacy decision, applicable safeguards such as standard contractual clauses, or a valid derogation only where permitted. [INSERT CURRENT TRANSFER MECHANISM AND SUBPROCESSOR LIST.]
+Because M.O.S.A.N.G. is a global service, information may be processed outside the Philippines and outside the country where the user lives. Before launch, we will document the countries, processors, transfer mechanisms, contractual safeguards, and supplementary security measures. For GDPR-covered transfers, we will use an adequacy decision, applicable safeguards such as standard contractual clauses, or a valid derogation only where permitted. [INSERT CURRENT TRANSFER MECHANISM AND SUBPROCESSOR LIST.]
 
 ## 8. Retention
 

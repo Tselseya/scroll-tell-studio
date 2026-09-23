@@ -1,8 +1,8 @@
-# ScrollTell Studio — MVP Architecture
+# M.O.S.A.N.G. — MVP Architecture
 
 ## Product direction
 
-ScrollTell Studio is a lightweight, open-source, single-user content operations workspace inspired by Blotato's multi-platform publishing workflow and MangoDisk's local-first, agent-friendly organization model. It is intended to run on modest hardware and to delegate demanding language-model work to connected providers rather than requiring a large local model.
+M.O.S.A.N.G. is a lightweight, open-source, single-user content operations workspace inspired by Blotato's multi-platform publishing workflow and MangoDisk's local-first, agent-friendly organization model. It is intended to run on modest hardware and to delegate demanding language-model work to connected providers rather than requiring a large local model.
 
 The MVP should help one creator draft, organize, transform, preview, schedule, and publish content from one browser-based local application.
 
@@ -177,7 +177,7 @@ For low-spec computers:
 ## Suggested repository layout
 
 ```text
-scroll-tell-studio/
+mosang/
 ├── apps/
 │   ├── web/                  # React/Vite browser UI
 │   └── server/               # local HTTP server and MCP endpoint
@@ -211,7 +211,7 @@ The first release will not include multi-user accounts, team permissions, hosted
 
 The project home is the existing public repository:
 
-<https://github.com/Tselseya/scroll-tell-studio>
+<https://github.com/Tselseya/mosang>
 
 It is currently public on the `main` branch and contains only a minimal `index.html`, so the next implementation phase should establish the repository structure, README, license, contribution guide, security policy, and a runnable skeleton before adding publishing integrations.
 

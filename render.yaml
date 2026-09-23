@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: scrolltell-api
+    name: mosang-api
     runtime: node
     plan: starter
     region: singapore
@@ -31,6 +31,6 @@ services:
       - key: MCP_AUTH_TOKEN
         sync: false
     disk:
-      name: scrolltell-data
+      name: mosang-data
       mountPath: /var/data
       sizeGB: 1

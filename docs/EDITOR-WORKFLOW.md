@@ -8,7 +8,7 @@ Uploads are stored in the local media vault. The default development path is `da
 
 ## Direct Claude selection
 
-ScrollTell uses Anthropic's official OpenAI-compatible compatibility layer for the direct Claude option. Anthropic documents that this requires the Claude base URL, a Claude API key, and a Claude model name. Configure the server environment:
+M.O.S.A.N.G. uses Anthropic's official OpenAI-compatible compatibility layer for the direct Claude option. Anthropic documents that this requires the Claude base URL, a Claude API key, and a Claude model name. Configure the server environment:
 
 ```env
 CLAUDE_API_KEY=your-claude-console-key
@@ -24,7 +24,7 @@ The compatibility layer is appropriate for ordinary editorial chat and rewrites.
 
 Manus is not exposed here as a synchronous model-provider dropdown because Manus is a complete AI agent and tool runner, not a conventional chat-completions endpoint. The editor therefore labels it **Manus via MCP** and disables the local chat box when selected. This avoids pretending that a Manus MCP connection can be called like a normal model API.
 
-To use Manus with ScrollTell:
+To use Manus with M.O.S.A.N.G.:
 
 1. Deploy the API so the MCP endpoint is reachable over HTTPS.
 2. Set a strong server value for `MCP_AUTH_TOKEN`.
@@ -36,7 +36,7 @@ To use Manus with ScrollTell:
    ```
 
 5. Configure bearer-token authentication with the same token.
-6. Test the connection and allow Manus to see the ScrollTell tools.
+6. Test the connection and allow Manus to see the M.O.S.A.N.G. tools.
 7. In Manus chat, ask it to list drafts, create a draft, update a draft, create a platform variant, or queue a job.
 
 The MCP route lets Manus operate on the same content workspace. It does not make Manus appear as an inline completion model inside the editor. If inline Manus-generated text is required later, implement a separate Manus API adapter that submits an agent task, tracks its task ID, and returns the completed result asynchronously. That is a different integration from MCP and should include explicit consent and job-status UI.
@@ -47,6 +47,6 @@ The MCP route lets Manus operate on the same content workspace. It does not make
 |---|---|---|---|
 | OpenAI-compatible | Server sends chat-completions request to `AI_BASE_URL` | Fast inline rewrite and chat | Available |
 | Claude API | Server uses Anthropic's OpenAI-compatible endpoint with `CLAUDE_API_KEY` | Claude inline editorial work | Available |
-| Manus via MCP | Manus calls ScrollTell tools from Manus chat | Agentic draft operations and workflows | Available through MCP, not inline model chat |
+| Manus via MCP | Manus calls M.O.S.A.N.G. tools from Manus chat | Agentic draft operations and workflows | Available through MCP, not inline model chat |
 
 Never place any provider key in `VITE_*` variables or frontend source. Store keys only in the API environment and rotate them if exposed.

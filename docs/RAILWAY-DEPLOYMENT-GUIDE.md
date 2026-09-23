@@ -1,4 +1,4 @@
-# Deploy ScrollTell Studio’s Node.js API to Railway
+# Deploy M.O.S.A.N.G.’s Node.js API to Railway
 
 This guide deploys the Fastify API in `apps/server`, keeps the SQLite database on a Railway Volume, and connects the GitHub Pages frontend to the API over HTTPS.
 
@@ -39,7 +39,7 @@ Open [Railway](https://railway.app/) and sign in with GitHub.
 Create a new project, choose **Deploy from GitHub repo**, and select:
 
 ```text
-Tselseya/scroll-tell-studio
+Tselseya/mosang
 ```
 
 Use the repository root as the service root. Do not select `apps/web` because the API service needs the monorepo root, the workspace lockfile, and the `packages/db` package.
@@ -64,7 +64,7 @@ In the Railway project:
 1. Open the project canvas.
 2. Select **Add** or the command palette.
 3. Create a **Volume**.
-4. Attach the Volume to the ScrollTell API service.
+4. Attach the Volume to the M.O.S.A.N.G. API service.
 5. Set the mount path to:
 
 ```text
@@ -95,7 +95,7 @@ You need the Railway domain before these values can be final. First deploy once,
 
 ```text
 APP_URL=https://YOUR_RAILWAY_DOMAIN
-WEB_APP_URL=https://tselseya.github.io/scroll-tell-studio/
+WEB_APP_URL=https://tselseya.github.io/mosang/
 WEB_ORIGIN=https://tselseya.github.io
 ```
 
@@ -145,20 +145,20 @@ In the API service:
 4. Copy the resulting URL, for example:
 
 ```text
-https://scrolltell-api-production.up.railway.app
+https://mosang-api-production.up.railway.app
 ```
 
 Now update the variables:
 
 ```text
-APP_URL=https://scrolltell-api-production.up.railway.app
+APP_URL=https://mosang-api-production.up.railway.app
 ```
 
 If the service redeploys after changing variables, wait for the deployment to finish before testing.
 
 ## 6. Configure GitHub OAuth
 
-In [GitHub Developer Settings](https://github.com/settings/developers), open or create the OAuth App for ScrollTell Studio.
+In [GitHub Developer Settings](https://github.com/settings/developers), open or create the OAuth App for M.O.S.A.N.G..
 
 Set the authorization callback URL to:
 
@@ -172,7 +172,7 @@ The GitHub OAuth app should have the minimum scopes needed by the application. F
 
 ## 7. Configure Google OAuth
 
-In [Google Cloud Console](https://console.cloud.google.com/), open the OAuth client used by ScrollTell Studio.
+In [Google Cloud Console](https://console.cloud.google.com/), open the OAuth client used by M.O.S.A.N.G..
 
 Add this authorized redirect URI:
 
@@ -211,7 +211,7 @@ HTTP/2 200
 ```json
 {
   "ok": true,
-  "service": "scrolltell-server",
+  "service": "mosang-server",
   "timestamp": "..."
 }
 ```
@@ -278,7 +278,7 @@ Or push a new commit to `main`.
 
 After deployment, open:
 
-<https://tselseya.github.io/scroll-tell-studio/>
+<https://tselseya.github.io/mosang/>
 
 The sign-in buttons should point to:
 
@@ -293,7 +293,7 @@ If the buttons still point to `127.0.0.1`, the `VITE_API_URL` repository variabl
 
 Use a private browser window and open the Pages URL.
 
-1. Confirm the page loads the ScrollTell sign-in screen.
+1. Confirm the page loads the M.O.S.A.N.G. sign-in screen.
 2. Click **Continue with GitHub** or **Continue with Google**.
 3. Complete the OAuth approval.
 4. Confirm the provider redirects to the Railway API callback.
@@ -330,7 +330,7 @@ curl -i "$API_URL/mcp" \
   --data '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"railway-smoke-test","version":"0.1.0"}}}'
 ```
 
-A successful response uses `text/event-stream` and contains the ScrollTell MCP server name.
+A successful response uses `text/event-stream` and contains the M.O.S.A.N.G. MCP server name.
 
 Connect Claude Code with:
 
@@ -338,7 +338,7 @@ Connect Claude Code with:
 claude mcp add \
   --transport http \
   --header "Authorization: Bearer $MCP_AUTH_TOKEN" \
-  scrolltell \
+  mosang \
   "$API_URL/mcp"
 ```
 
