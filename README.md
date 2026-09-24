@@ -73,6 +73,8 @@ See [`docs/EDITOR-WORKFLOW.md`](./docs/EDITOR-WORKFLOW.md) for rich-media upload
 
 See [`docs/N8N-INTEGRATION.md`](./docs/N8N-INTEGRATION.md) for the M.O.S.A.N.G. automation API, n8n credential setup, generation-job workflow, and OpenAPI contract.
 
+See [`docs/GENERATION-PROVIDERS.md`](./docs/GENERATION-PROVIDERS.md) for the provider map, BYOK/free operating model, and local-provider path.
+
 ## Verify and build
 
 ```bash

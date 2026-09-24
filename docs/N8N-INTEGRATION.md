@@ -131,7 +131,7 @@ Body:
 }
 ```
 
-The response is asynchronous:
+The response is asynchronous. Once the provider worker is running and its key is configured, it will call the selected provider and attach the generated file to the M.O.S.A.N.G. media vault:
 
 ```json
 {
@@ -140,7 +140,7 @@ The response is asynchronous:
     "type": "ai_generation",
     "status": "queued"
   },
-  "message": "Generation queued. Provider workers will execute this job when configured."
+  "message": "Generation queued. Run the M.O.S.A.N.G. worker with the selected provider configured."
 }
 ```
 
@@ -154,21 +154,38 @@ GET https://YOUR_MOSANG_API_HOST/api/v1/jobs/{{$json.job.id}}
 
 Continue polling while the status is `queued` or `running`. Stop on `succeeded`, `failed`, or `cancelled`.
 
-## Important current limitation
+## Run the provider worker
 
-The API currently **queues** generation jobs but does not yet execute Google, ElevenLabs, or other generation-provider adapters. The generation endpoints establish the stable n8n contract and job records first. The next implementation phase will add workers for:
+The API process and worker process are separate. Run both during local development:
 
-- Google/Imagen image generation
-- ElevenLabs voice generation
-- A video provider such as Veo or another supported API
-- Media output persistence and attachment to content items
+```bash
+pnpm server:start
+pnpm worker:start
+```
+
+The worker polls queued `ai_generation` jobs, claims one, calls the configured provider, writes the returned bytes to `MEDIA_DIR`, creates a media-asset record, and updates the job to `succeeded`. Failed jobs are retried up to `WORKER_MAX_ATTEMPTS`.
+
+Current adapters:
+
+| Job kind | Provider value | Required configuration | Output |
+|---|---|---|---|
+| `image_generation` | `google-image`, `google-imagen`, or `google` | `GOOGLE_IMAGE_API_KEY` and a supported Google image endpoint/model | PNG media asset |
+| `voice_generation` | `elevenlabs` or `eleven-labs` | `ELEVENLABS_API_KEY` and a voice ID | MP3 media asset |
+
+The Google adapter accepts a configurable `GOOGLE_IMAGE_API_URL` because Google has changed image-generation surfaces; verify that the selected endpoint and model are enabled for your account. The old Gemini Imagen endpoint is not assumed to be available.
+
+Video jobs are intentionally left queued until a video-provider adapter is added.
 
 Similarly, `/api/v1/publish/queue` creates a local job but does not yet make an external social post until a publishing adapter and worker are configured.
 
-Do not describe a queued job as a completed image, video, voice file, or published post.
+Do not describe a queued or failed job as a completed image, video, voice file, or published post.
 
 ## Security and deployment
 
 Use a separate API key for each automation environment where possible. The current first version uses one server-level key for the personal workspace. Before public multi-tenant launch, replace it with database-backed keys that support workspace scopes, permissions, expiration, revocation, rate limits, and last-used timestamps.
 
 Use HTTPS for cloud deployments. Keep the M.O.S.A.N.G. API key separate from `MCP_AUTH_TOKEN`, OAuth client secrets, and provider keys. Do not pass the key in a webhook URL. n8n Webhook production URLs should be authenticated and should only be enabled after the workflow has been tested.
+
+## Keeping it free
+
+M.O.S.A.N.G. is free and open source, and the worker does not hide provider costs or pay them on your behalf. The hybrid model is **BYOK (bring your own key)**: you add your own Google and ElevenLabs credentials, and each provider applies its own quotas, free tier, or billing rules. If you do not configure a key, that provider's jobs fail safely without a paid request. Keep `WORKER_MAX_ATTEMPTS` low and use n8n idempotency keys so retries do not create unexpected provider usage.

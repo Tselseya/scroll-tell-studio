@@ -337,7 +337,7 @@ async function queueGeneration(request: Parameters<typeof requireAutomationApiKe
   if (!workspace) return reply.code(404).send({ error: 'Workspace not found' })
   await db.insert(jobs).values({ id, workspaceId: workspace.id, type: 'ai_generation', status: 'queued', payload: { kind, ...parsed.data }, runAt: new Date().toISOString() })
   const [job] = await db.select().from(jobs).where(eq(jobs.id, id)).limit(1)
-  return reply.code(202).send({ job, message: 'Generation queued. Provider workers will execute this job when configured.' })
+  return reply.code(202).send({ job, message: 'Generation queued. Run the M.O.S.A.N.G. worker with the selected provider configured.' })
 }
 
 app.post('/api/v1/generation/images', async (request, reply) => queueGeneration(request, reply, 'image_generation'))

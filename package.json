@@ -10,6 +10,8 @@
     "dev:all": "concurrently -n web,server -c blue,green \"pnpm dev\" \"pnpm server:dev\"",
     "server:dev": "pnpm --filter @mosang/server dev",
     "server:start": "pnpm --filter @mosang/server start",
+    "worker:start": "pnpm --filter @mosang/server worker",
+    "worker:dev": "pnpm --filter @mosang/server exec tsx watch src/worker.ts",
     "server:prod": "pnpm db:migrate && pnpm server:start",
     "build": "pnpm --filter @mosang/web build",
     "typecheck": "pnpm --filter @mosang/db typecheck && pnpm --filter @mosang/server typecheck && pnpm --filter @mosang/web typecheck",
