@@ -24,6 +24,16 @@ The practical meaning of “free” is:
 4. Retry limits and idempotency keys are used to reduce accidental duplicate requests.
 5. Local providers can be added later, such as ComfyUI for images or a local text-to-speech engine, when the user's hardware can support them.
 
+## Verified self-hosted image and video options
+
+For current runnable open-source projects, separate **inference software/code licensing** from the **model checkpoint and asset terms**. ComfyUI provides a documented local HTTP/WebSocket workflow API; InvokeAI provides a local workflow API for image generation. Wan2.1 has documented local T2V and I2V paths and official ComfyUI workflows. These can be connected to n8n with HTTP Request nodes, but this does not mean M.O.S.A.N.G. has an n8n node for each provider or a video adapter.
+
+See [`OPEN_SOURCE_MEDIA_GENERATION.md`](./OPEN_SOURCE_MEDIA_GENERATION.md) for source links, task distinctions, licenses/access conditions, resource caveats, n8n setup patterns, and corrections to the older pasted project list.
+
+## Current M.O.S.A.N.G. implementation boundary
+
+The repository's current worker has a Google image adapter and an ElevenLabs voice adapter. The video route is an API/job contract only: it remains queued until a video adapter is implemented. ComfyUI, InvokeAI, Wan2.1, CogVideoX, and other projects documented in the guide are external/local integration candidates; none should be described as an already-wired M.O.S.A.N.G. provider.
+
 ## Current environment configuration
 
 ```env
