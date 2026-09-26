@@ -176,6 +176,8 @@ The Google adapter accepts a configurable `GOOGLE_IMAGE_API_URL` because Google 
 
 Video jobs are intentionally left queued until a video-provider adapter is added.
 
+For self-hosted image/video generation outside the current M.O.S.A.N.G. worker adapters, see [`OPEN_SOURCE_MEDIA_GENERATION.md`](./OPEN_SOURCE_MEDIA_GENERATION.md). In particular, ComfyUI documents a separate local server API (`POST /prompt`, history/output routes, and WebSocket progress) that n8n can call with HTTP Request nodes. This is a direct external integration, not an adapter already included in M.O.S.A.N.G. Do not expose the unauthenticated ComfyUI server publicly; keep it on a private network or behind authenticated access.
+
 Similarly, `/api/v1/publish/queue` creates a local job but does not yet make an external social post until a publishing adapter and worker are configured.
 
 Do not describe a queued or failed job as a completed image, video, voice file, or published post.

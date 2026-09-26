@@ -75,6 +75,8 @@ See [`docs/N8N-INTEGRATION.md`](./docs/N8N-INTEGRATION.md) for the M.O.S.A.N.G. 
 
 See [`docs/GENERATION-PROVIDERS.md`](./docs/GENERATION-PROVIDERS.md) for the provider map, BYOK/free operating model, and local-provider path.
 
+See [`docs/OPEN_SOURCE_MEDIA_GENERATION.md`](./docs/OPEN_SOURCE_MEDIA_GENERATION.md) for verified self-hosted text-to-image, image-to-video, and text-to-video projects, model/code licensing caveats, and n8n connection steps.
+
 ## Verify and build
 
 ```bash
