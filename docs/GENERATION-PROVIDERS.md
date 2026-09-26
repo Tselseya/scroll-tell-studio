@@ -30,6 +30,8 @@ For current runnable open-source projects, separate **inference software/code li
 
 See [`OPEN_SOURCE_MEDIA_GENERATION.md`](./OPEN_SOURCE_MEDIA_GENERATION.md) for source links, task distinctions, licenses/access conditions, resource caveats, n8n setup patterns, and corrections to the older pasted project list.
 
+For the reported Intel i5-1035G7 / 8 GB RAM / CPU-only machine, see the guide's **“Fit for this machine: i5-1035G7, 8 GB RAM, Docker Desktop”** section. In particular, the screenshot shows only about 1.6 GB currently free in Docker across containers; the recommended stable-diffusion.cpp SD 1.5 setup is an experiment to test after freeing/increasing memory, not a promise of a reliable run at the current allocation. True local text-to-video/image-to-video is not realistic under this limit.
+
 ## Current M.O.S.A.N.G. implementation boundary
 
 The repository's current worker has a Google image adapter and an ElevenLabs voice adapter. The video route is an API/job contract only: it remains queued until a video adapter is implemented. ComfyUI, InvokeAI, Wan2.1, CogVideoX, and other projects documented in the guide are external/local integration candidates; none should be described as an already-wired M.O.S.A.N.G. provider.
